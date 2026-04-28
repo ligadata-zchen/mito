@@ -1,6 +1,12 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Pinned-ish requirements for installing the Mito fork into a Docker container
-# (or any clean Python 3.9+ env) entirely from this git repo.
+# (or any clean Python 3.11+ env) entirely from this git repo.
+#
+# Target stack:
+#   Python      3.11   (required — mito-ai-core / mito-ai both pin >=3.11)
+#   JupyterLab  4.1+   (pulled transitively; pinned <5)
+#   PySpark     3.5+   (via mito-ai[spark]; needs Java 17 at runtime)
+#   MLflow      3.0+   (via mito-ai[mlflow] / mito-ai-core[mlflow])
 #
 # Use this for reproducible installs:
 #   pip install -r requirements-docker.txt

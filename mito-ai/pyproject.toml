@@ -14,7 +14,7 @@ build-backend = "hatchling.build"
 name = "mito_ai"
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 classifiers = [
     "Framework :: Jupyter",
     "Framework :: Jupyter :: JupyterLab",
@@ -24,8 +24,6 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -78,9 +76,9 @@ deploy = [
 # instead — useful for air-gapped Docker deployments.
 # ────────────────────────────────────────────────────────────────────
 hive = [
-    "pyhive[hive]",
-    "thrift",
-    "thrift-sasl",
+    "pyhive[hive]>=0.7.0",
+    "thrift>=0.16.0",
+    "thrift-sasl>=0.4.3",
 ]
 trino = [
     "trino[sqlalchemy]",
@@ -93,12 +91,13 @@ bigquery = [
     "google-cloud-bigquery",
 ]
 # Spark covers both connector types: the Thrift Server (uses pyhive[hive])
-# and the embedded SparkSession (uses pyspark).
+# and the embedded SparkSession (uses pyspark). Pinned >=3.5 to match
+# Spark 3.5's Thrift wire protocol and Java 17 support.
 spark = [
-    "pyspark",
-    "pyhive[hive]",
-    "thrift",
-    "thrift-sasl",
+    "pyspark>=3.5.0",
+    "pyhive[hive]>=0.7.0",
+    "thrift>=0.16.0",
+    "thrift-sasl>=0.4.3",
 ]
 all-connectors = [
     "mito-ai[hive]",

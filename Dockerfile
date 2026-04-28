@@ -18,10 +18,15 @@
 #       mito-fork:latest
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Target stack:
+#   Python    3.11   (mito-ai-core, mito-ai both require >=3.11)
+#   JupyterLab 4.1+   (pulled via mito-ai dependency; pinned <5)
+#   PySpark   3.5+    (Spark 3.5 supports Java 8/11/17; we install JRE 17)
+#   MLflow    3.0+    (modern tracing API: start_span, span_type, set_attribute)
 FROM python:3.11-slim
 
 LABEL org.opencontainers.image.source="https://github.com/ligadata-zchen/mito"
-LABEL org.opencontainers.image.description="Mito AI (fork) — Jupyter extensions with extended LLM provider, OLAP/Spark connectors, and MLflow observability"
+LABEL org.opencontainers.image.description="Mito AI (fork) — Python 3.11, JupyterLab 4.1+, PySpark 3.5+, MLflow 3.0+"
 LABEL org.opencontainers.image.licenses="AGPL-3.0-only"
 
 # ── Build args ─────────────────────────────────────────────────────────────
@@ -45,13 +50,15 @@ ARG MITO_EXTRAS=all
 #                  silently don't ship.
 # - libsasl2-dev + sasl modules: required for Hive/Spark Thrift LDAP/Kerberos
 # - unixodbc-dev: required for pyodbc (MSSQL connector)
-# - default-jre-headless: required by embedded PySpark (SparkSession needs JVM)
+# - openjdk-17-jre-headless: required by embedded PySpark 3.5+. Spark 3.5
+#   supports Java 8/11/17; we install 17 (the latest LTS Spark supports) so
+#   future Spark 4.x compatibility is straightforward when it lands.
 # - libpq-dev: pinned source build of psycopg2 needs libpq headers
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl git build-essential \
         libsasl2-dev libsasl2-modules-gssapi-mit \
         unixodbc-dev libpq-dev \
-        default-jre-headless \
+        openjdk-17-jre-headless \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && apt-get clean \

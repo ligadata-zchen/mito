@@ -26,11 +26,16 @@ To get those, install from this repo's source. Below are the four ways to do tha
 
 | Tool | Version | Why |
 |---|---|---|
-| Python | ≥ 3.9 | mito-ai-core / mito-ai supported range |
+| Python | **3.11** (`>=3.11`) | both `mito-ai-core` and `mito-ai` declare `requires-python = ">=3.11"` |
+| JupyterLab | **4.1+** (`>=4.1.0,<5`) | pulled in transitively by `pip install mito-ai`; do not preinstall a 3.x lab |
 | Node.js | ≥ 18 (20 recommended) | `pip install mito-ai` runs `jlpm build` for the labextension |
-| Java (JRE) | ≥ 11 | only if using the embedded PySpark connector |
+| Java (JRE) | **17** | required by PySpark 3.5+ for the embedded SparkSession connector |
+| PySpark | **3.5+** | bundled by `mito-ai[spark]`; ships with the Spark 3.5 wire protocol |
+| MLflow | **3.0+** | bundled by `mito-ai-core[mlflow]` / `mito-ai[mlflow]`; modern tracing API |
 | `libsasl2-dev` + GSSAPI module | distro package | only if using Hive / Spark Thrift with LDAP/Kerberos |
 | `unixodbc-dev` | distro package | only if using the MSSQL connector |
+
+> Python 3.9 / 3.10 are no longer supported. PyPI's `pip install mito-ai-core` will refuse to install on those interpreters because of `requires-python = ">=3.11"`. Use `pyenv install 3.11` or the `python:3.11-slim` Docker base.
 
 If Node.js is missing during `pip install mito-ai`, the build silently produces a stale labextension bundle and **the fork's UI changes (model picker entries, new DB connection forms) won't ship**. Backend Python still works, so this is a confusing class of bug. Always check `node --version` first.
 
