@@ -1,0 +1,66 @@
+# Mito Docker build excludes — keeps the build context small (~10 MB instead
+# of multi-GB) and prevents secrets/local state from leaking into images.
+#
+# The Dockerfiles in this repo do `git clone` from inside the build, so the
+# local working tree is NOT the source of truth. We still keep this list
+# tight so `docker build .` doesn't unnecessarily copy the working tree.
+
+# VCS
+.git
+.gitignore
+.gitattributes
+
+# Local agent/editor state
+.claude
+.vscode
+.idea
+.cursor
+
+# Python build artifacts
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.egg-info
+*.egg
+.pytest_cache
+.mypy_cache
+.coverage
+htmlcov
+.tox
+
+# Node / JupyterLab build artifacts
+node_modules
+**/node_modules
+lib
+**/lib
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+
+# Mito-ai labextension build output (rebuilt during docker build)
+mito-ai/mito_ai/labextension
+
+# Local logs / databases / notebooks
+*.log
+*.sqlite3
+.ipynb_checkpoints
+sample_data
+
+# Docker artifacts themselves
+Dockerfile*
+.dockerignore
+
+# Documentation that doesn't need to ship in the image
+docs
+*.md
+!mito-ai-core/README.md
+!mito-ai/README.md
+
+# CI / packaging
+.github
+deployment
+binder
+jupyterhub
+ui-tests
+tests/results

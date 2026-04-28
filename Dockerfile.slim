@@ -1,0 +1,99 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Mito AI fork — multi-stage Dockerfile
+#
+# Builds wheels in a heavy "builder" stage (with Node.js for the labextension
+# build), then copies just the wheels into a slim runtime stage. Final image
+# ~600 MB (vs. ~1.5 GB for the single-stage Dockerfile).
+#
+# Build:
+#   docker build -f Dockerfile.slim -t mito-fork:slim .
+#   docker build -f Dockerfile.slim -t mito-fork:slim --build-arg MITO_REF=v0.1.0 .
+#
+# This is the variant you should ship to end users / CI.
+# ─────────────────────────────────────────────────────────────────────────────
+
+ARG MITO_REF=main
+
+# ============================================================================
+# Stage 1: Builder — clone fork, build wheels (Node.js + build tools needed)
+# ============================================================================
+FROM python:3.11 AS builder
+
+ARG MITO_REF
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates curl git \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+RUN git clone --depth 1 --branch "${MITO_REF}" \
+        https://github.com/ligadata-zchen/mito.git . || \
+    git clone https://github.com/ligadata-zchen/mito.git . && git checkout "${MITO_REF}"
+
+RUN pip install --no-cache-dir build
+
+# Build wheels. mito-ai-core has no JS step; mito-ai's build runs jlpm via
+# hatch-jupyter-builder.
+RUN cd mito-ai-core && python -m build --wheel --outdir /wheels
+RUN cd mito-ai && touch yarn.lock && python -m build --wheel --outdir /wheels
+
+# ============================================================================
+# Stage 2: Runtime — slim image, no Node.js, no build tools
+# ============================================================================
+FROM python:3.11-slim
+
+LABEL org.opencontainers.image.source="https://github.com/ligadata-zchen/mito"
+LABEL org.opencontainers.image.description="Mito AI (fork) — slim runtime"
+LABEL org.opencontainers.image.licenses="AGPL-3.0-only"
+
+# Connector extras to install. Set to an empty string for a minimal image.
+ARG MITO_EXTRAS=all-connectors
+
+# Runtime-only system deps. Note: NO Node.js, NO build-essential.
+# Java is needed only if you intend to use the embedded PySpark connector;
+# remove the openjdk line for a smaller image if you don't.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libsasl2-2 libsasl2-modules-gssapi-mit \
+        unixodbc \
+        libpq5 \
+        default-jre-headless \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /wheels /tmp/wheels
+
+# Install the locally-built wheels + mitosheet from PyPI.
+#
+# Two-step install pattern:
+#   1. pip install /tmp/wheels/<name>.whl                     — installs our fork
+#   2. pip install --find-links /tmp/wheels "mito-ai[extras]" — pulls extras
+# Step 2 uses --find-links so pip resolves the bare name "mito-ai" against the
+# local wheel directory (preventing it from downloading upstream mito-ai from
+# PyPI on top of our fork). The wheel is already installed, so step 2 just
+# adds the optional deps from the requested extras.
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir /tmp/wheels/mito_ai_core-*.whl
+RUN pip install --no-cache-dir /tmp/wheels/mito_ai-*.whl
+RUN if [ -n "${MITO_EXTRAS}" ]; then \
+        pip install --no-cache-dir --find-links /tmp/wheels "mito-ai[${MITO_EXTRAS}]"; \
+    fi
+RUN pip install --no-cache-dir mitosheet \
+ && rm -rf /tmp/wheels
+
+# Sanity checks
+RUN python -c "import mito_ai_core, mito_ai, mitosheet; print('OK')"
+RUN jupyter labextension list 2>&1 | grep -E "mito-ai|mitosheet" || (echo "labextensions missing" && exit 1)
+
+EXPOSE 8888
+WORKDIR /workspace
+
+CMD ["jupyter", "lab", \
+     "--ip=0.0.0.0", \
+     "--port=8888", \
+     "--no-browser", \
+     "--allow-root", \
+     "--ServerApp.token=", \
+     "--ServerApp.password=", \
+     "--ServerApp.root_dir=/workspace"]

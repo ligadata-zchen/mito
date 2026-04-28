@@ -1,0 +1,31 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Pinned-ish requirements for installing the Mito fork into a Docker container
+# (or any clean Python 3.9+ env) entirely from this git repo.
+#
+# Use this for reproducible installs:
+#   pip install -r requirements-docker.txt
+#
+# Notes:
+#   - `mito-ai` MUST be installed AFTER `mito-ai-core`. pip respects the order
+#     of lines here.
+#   - Installing `mito-ai` from git triggers `jlpm build` via
+#     hatch-jupyter-builder. Node.js (>=18) MUST be on PATH.
+#   - `mitosheet` is unchanged in this fork; it comes from PyPI directly.
+#   - The "all" extra on mito-ai pre-installs every database driver and the
+#     mlflow tracing dependency, so the resulting image works fully offline.
+#     For a slimmer install, swap `[all]` for `[hive,bigquery]` (or whatever
+#     subset you actually need), or remove the extras entirely and rely on
+#     mito_ai/db/utils.py:install_db_drivers() to lazy-install drivers when
+#     a connection is first created.
+#   - The default ref is `main`. Pin to a tag/SHA for reproducibility:
+#     replace `@main` with `@v0.1.0` (tag) or `@<sha>` (commit).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Core: pure-Python AI provider layer. Includes mlflow extra for observability.
+mito-ai-core[mlflow] @ git+https://github.com/ligadata-zchen/mito.git@main#subdirectory=mito-ai-core
+
+# Extension: JupyterLab extension. Pulls in JupyterLab itself + every connector.
+mito-ai[all] @ git+https://github.com/ligadata-zchen/mito.git@main#subdirectory=mito-ai
+
+# Spreadsheet (unchanged in this fork).
+mitosheet

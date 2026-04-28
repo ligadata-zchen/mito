@@ -80,6 +80,24 @@ jupyter lab
 ```
 This will install Mito for JupyterLab 4.0. More detailed installation instructions can also be found [here](https://docs.trymito.io/getting-started/installing-mito).
 
+> ⚠️ The PyPI command above installs **upstream** Mito and will not include this fork's extensions (Opus 4.6 / Ollama / Hive / Trino / Presto / BigQuery / Spark / MLflow). To get those, install from this repository's source — see [INSTALL.md](INSTALL.md) for the four supported install paths (Docker single-stage, Docker multi-stage, editable clone, pip-from-git).
+
+## 🐳 Docker
+
+The fastest way to try this fork is the bundled Dockerfile. It clones the repo, builds the JupyterLab extension with all fork features baked in, and serves JupyterLab on `:8888`.
+
+```bash
+docker build -t mito-fork:latest .
+docker run --rm -p 8888:8888 \
+    -e ANTHROPIC_API_KEY=sk-ant-... \
+    -v "$PWD:/workspace" \
+    mito-fork:latest
+```
+
+Then open <http://localhost:8888/lab>.
+
+The image bundles every database driver and `mlflow` by default. For a slimmer ~600 MB runtime, use `Dockerfile.slim` (multi-stage build). For build-arg knobs (`MITO_REF`, `MITO_EXTRAS`), the full env-var reference, and verification checklist, see [INSTALL.md § Docker](INSTALL.md#docker--single-stage-recommended).
+
 ## 📚 Documentation
 You can find all [Mito documentation available here](https://docs.trymito.io).
 

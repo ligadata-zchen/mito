@@ -47,6 +47,10 @@ dependencies = [
 
 [project.optional-dependencies]
 litellm = ["litellm"]
+# MLflow tracing of LLM completions. The mlflow_observability module is fail-open
+# and lazy-imports mlflow, so this extra is only needed when you actually want
+# spans recorded (activated at runtime by MITO_MLFLOW_ENABLED=true).
+mlflow = ["mlflow>=2.14.0"]
 test = [
     "pytest",
     "pytest-asyncio",

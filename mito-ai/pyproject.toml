@@ -70,6 +70,51 @@ deploy = [
     "hatch-jupyter-builder>=0.5"
 ]
 
+# ────────────────────────────────────────────────────────────────────
+# Optional database-connector extras for the engines added in this fork.
+# These drivers are otherwise lazy-installed at runtime by
+# mito_ai/db/utils.py:install_db_drivers() the first time a connection
+# of that type is created. Install the extra to bake them into the image
+# instead — useful for air-gapped Docker deployments.
+# ────────────────────────────────────────────────────────────────────
+hive = [
+    "pyhive[hive]",
+    "thrift",
+    "thrift-sasl",
+]
+trino = [
+    "trino[sqlalchemy]",
+]
+presto = [
+    "pyhive[presto]",
+]
+bigquery = [
+    "sqlalchemy-bigquery",
+    "google-cloud-bigquery",
+]
+# Spark covers both connector types: the Thrift Server (uses pyhive[hive])
+# and the embedded SparkSession (uses pyspark).
+spark = [
+    "pyspark",
+    "pyhive[hive]",
+    "thrift",
+    "thrift-sasl",
+]
+all-connectors = [
+    "mito-ai[hive]",
+    "mito-ai[trino]",
+    "mito-ai[presto]",
+    "mito-ai[bigquery]",
+    "mito-ai[spark]",
+]
+# MLflow tracing — pulls the same dep as mito-ai-core[mlflow].
+mlflow = ["mito-ai-core[mlflow]"]
+# Everything: all connectors + MLflow.
+all = [
+    "mito-ai[all-connectors]",
+    "mito-ai[mlflow]",
+]
+
 [project.entry-points."jupyter_serverproxy_servers"]
 "mito-ai" = "mito_ai:_load_jupyter_server_extension"
 
