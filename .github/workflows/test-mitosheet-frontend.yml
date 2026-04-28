@@ -1,0 +1,289 @@
+name: Test - mitosheet frontend
+
+on:
+  push:
+    branches: [ dev ]
+    paths:
+      - 'mitosheet/**'
+      - 'tests/**'
+      - '.github/workflows/test-mitosheet-frontend.yml'
+      - '!tests/mitoai_ui_tests/**'
+  pull_request:
+    paths:
+      - 'mitosheet/**'
+      - 'tests/**'
+      - '.github/workflows/test-mitosheet-frontend.yml'
+      - '!tests/mitoai_ui_tests/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-mitosheet-frontend-jupyterlab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.12']
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: pip
+        cache-dependency-path: |
+          mitosheet/setup.py
+          tests/requirements.txt
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: mitosheet/package-lock.json
+    - name: Install dependencies
+      run: |
+        cd tests
+        bash mac-setup.sh
+    - name: Setup JupyterLab
+      run: |
+        cd tests
+        source venv/bin/activate
+        cd ../mitosheet
+        jupyter labextension develop . --overwrite
+    - name: Start a server and run tests
+      run: |
+        cd tests
+        source venv/bin/activate
+        jupyter lab --config jupyter_server_test_config.py &
+        npm run test:jupyterlab
+    - name: Upload test-results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: jupyterlab-playwright-report-${{ matrix.python-version }}-${{ github.run_id }}
+        path: tests/playwright-report/
+        retention-days: 14
+
+  test-mitosheet-frontend-jupyternotebook:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11']
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: pip
+        cache-dependency-path: |
+          mitosheet/setup.py
+          tests/requirements.txt
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: mitosheet/package-lock.json
+    - name: Install dependencies
+      run: |
+        cd tests
+        bash mac-setup.sh
+    - name: Setup Jupyter notebook
+      run: |
+        cd tests
+        source venv/bin/activate
+        cd ../mitosheet
+        jupyter labextension develop . --overwrite
+    - name: Start a server and run tests
+      run: |
+        cd tests
+        source venv/bin/activate
+        jupyter notebook --config jupyter_notebook_config.py &
+        npm run test:notebook
+    - name: Upload test-results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: jupyternotebook-playwright-report-${{ matrix.python-version }}-${{ github.run_id }}
+        path: tests/playwright-report/
+        retention-days: 14
+
+  test-mitosheet-frontend-streamlit:
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        os: ['ubuntu-latest-m', 'macos-latest', 'windows-latest-l']
+        python-version: ['3.10']
+        project: 
+          - test-name: 'chromium'
+            install-name: 'chromium'
+          - test-name: 'firefox'
+            install-name: 'firefox'
+          - test-name: 'webkit'
+            install-name: 'webkit'
+          - test-name: 'Google Chrome'
+            install-name: 'chrome'
+          - test-name: 'Microsoft Edge'
+            install-name: 'msedge'
+        testfiles: ['taskpanes', 'grid', 'toolbar', 'graph']
+        exclude:
+          - os: 'windows-latest-l'
+            project:
+              test-name: webkit
+          - os: 'macos-latest'
+            project:
+              test-name: 'Microsoft Edge'
+          - os: 'ubuntu-latest-m'
+            project: 
+              test-name: 'Microsoft Edge'
+          - os: 'ubuntu-latest-m'
+            project:
+              test-name: 'webkit'
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    name: Test ${{ matrix.testfiles }} on ${{ matrix.os }} ${{ matrix.project.test-name }}
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: pip
+        cache-dependency-path: |
+          mitosheet/setup.py
+          tests/requirements.txt
+          tests/extra-requirements.txt
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: mitosheet/package-lock.json
+    - name: Install dependencies (ubuntu, macos)
+      if: matrix.os != 'windows-latest-l'
+      run: |
+        cd tests
+        bash mac-setup.sh ${{ matrix.project.install-name }}
+        source venv/bin/activate
+        pip install -r extra-requirements.txt
+    - name: Setup streamlit (ubuntu, macos)
+      if: matrix.os != 'windows-latest-l'
+      run: |
+        mkdir -p ~/.streamlit/
+        echo "[general]"  > ~/.streamlit/credentials.toml
+        echo "email = \"\""  >> ~/.streamlit/credentials.toml
+    - name: Setup streamlit (windows)
+      if: matrix.os == 'windows-latest-l'
+      run: |
+        $streamlitDir = "$HOME\.streamlit"
+        if (-not (Test-Path -Path $streamlitDir)) {
+          New-Item -ItemType Directory -Path $streamlitDir
+        }
+        Set-Content -Path "$streamlitDir\credentials.toml" -Value @"
+        [general]
+        email = ""
+        "@
+    - name: Install dependencies (windows)
+      if: matrix.os == 'windows-latest-l'
+      run: |
+        cd tests
+
+        python3 -m venv venv
+        .\venv\Scripts\Activate.ps1
+
+        pip install -r requirements.txt
+        pip install -r extra-requirements.txt
+
+        jlpm install
+        npx playwright install
+
+        cd ../mitosheet
+        pip install -e ".[test]"
+
+        jlpm install
+        jlpm run build
+    - name: Start a server and run tests (ubuntu, macos)
+      if: matrix.os != 'windows-latest-l'
+      run: |
+        cd tests
+        source venv/bin/activate
+        streamlit run streamlit_test.py --server.port 8555 &
+        bash check_server.sh
+        npm run test -- --project="${{ matrix.project.test-name }}" streamlit_ui_tests/${{matrix.testfiles}}
+    - name: Start a server and run tests (windows)
+      if: matrix.os == 'windows-latest-l'
+      run: |
+        cd tests
+        .\venv\Scripts\Activate.ps1
+        Start-Job { streamlit run streamlit_test.py --server.port 8555 } -WorkingDirectory (Get-Location)
+        npm run test -- --project="${{ matrix.project.test-name }}" streamlit_ui_tests/${{matrix.testfiles}}
+    - name: Upload test-results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-results-${{matrix.testfiles}}-${{ matrix.os }}-python${{ matrix.python-version }}-${{ matrix.project.test-name }}
+        path: tests/playwright-report/
+        retention-days: 14
+
+  test-mitosheet-frontend-dash:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.12']
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: pip
+        cache-dependency-path: |
+          mitosheet/setup.py
+          tests/requirements.txt
+          tests/extra-requirements.txt
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: mitosheet/package-lock.json
+    - name: Install dependencies
+      run: |
+        cd tests
+        bash mac-setup.sh
+        source venv/bin/activate
+        pip install -r extra-requirements.txt
+    - name: Start a server and run tests
+      run: |
+        cd tests
+        source venv/bin/activate
+        python dash-test.py &
+        npm run test:dash
+
+  test-mitosheet-jest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: mitosheet/package-lock.json
+    - name: Install dependencies
+      working-directory: mitosheet
+      run: |
+        npm install
+    - name: Run Jest tests
+      working-directory: mitosheet
+      run: |
+        npm run test

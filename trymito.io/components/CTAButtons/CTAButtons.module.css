@@ -1,0 +1,52 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.cta_buttons_container {
+    padding-top: 5rem;
+    padding-bottom: 0rem;
+}
+
+.center {
+    text-align: center;
+}
+
+.multiple_button_container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-wrap: wrap;
+}
+
+.product_hunt_button {
+    margin-left: 1rem;
+    margin-top: .5rem;
+}
+    
+.cta_subbutton {
+    color: var(--color-purple);
+    padding-top: 1rem;
+}
+
+.cta_subbutton:hover {
+    color: var(--color-light-purple)
+}
+
+.pro_cta_text {
+    font-size: 2rem;
+}
+
+
+@media only screen and (min-width: 50em) {
+    .cta_buttons_container {
+        padding-top: 3rem;
+        padding-bottom: 2rem;
+    }    
+
+    .pro_cta_text {
+        font-size: 1.25rem;
+    }
+}

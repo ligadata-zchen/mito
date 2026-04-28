@@ -1,0 +1,500 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+:root {
+  /*
+   * Single color palette — brand-forward, no grey shift.
+   * Base (backgrounds)
+   */
+  --color-background: #1c1824;
+  --color-surface: #130f1a;
+  --color-surface-accent: #221b2e;
+  /* Legacy aliases for migration */
+  --color-light-background: var(--color-surface);
+  --color-light-background-accent: var(--color-surface-accent);
+
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #d0d0d0;
+
+  /* Brand (pink–purple) */
+  --color-brand: #9d6cff;
+  --color-brand-light: #ac84fc;
+  --color-brand-alpha-10: rgba(157, 108, 255, 0.1);
+  --color-brand-alpha-15: rgba(157, 108, 255, 0.15);
+  --color-brand-alpha-20: rgba(157, 108, 255, 0.2);
+  --color-brand-alpha-30: rgba(157, 108, 255, 0.3);
+  --color-brand-alpha-40: rgba(157, 108, 255, 0.4);
+  --color-brand-alpha-50: rgba(157, 108, 255, 0.5);
+  --color-brand-alpha-60: rgba(157, 108, 255, 0.6);
+  --color-brand-light-alpha-15: rgba(172, 132, 252, 0.15);
+  --color-brand-light-alpha-20: rgba(172, 132, 252, 0.2);
+  --color-brand-light-alpha-25: rgba(172, 132, 252, 0.25);
+  --color-brand-light-alpha-30: rgba(172, 132, 252, 0.3);
+  --color-brand-light-alpha-40: rgba(172, 132, 252, 0.4);
+  --color-brand-light-alpha-50: rgba(172, 132, 252, 0.5);
+  --color-purple: var(--color-brand);
+  --color-light-purple: var(--color-brand-light);
+
+  /* Accents */
+  --color-accent-teal: #14b8a6;
+  --color-accent-amber: #f2c94c;
+  --color-accent-blue: #479be9;
+  --color-yellow: var(--color-accent-amber);
+  --color-twitter-blue: var(--color-accent-blue);
+
+  /* Gradients & glows */
+  --color-text-gradient: linear-gradient(180deg, var(--color-brand) 0.63%, rgba(157, 108, 255, 0.39) 100%);
+  --color-glow-brand: rgba(157, 108, 255, 0.35);
+  --color-glow-teal: rgba(20, 184, 166, 0.25);
+  --color-glow-amber: rgba(242, 201, 76, 0.2);
+  --color-gradient-card: linear-gradient(100.38deg, rgba(157, 108, 255, 0.2) -4.09%, rgba(157, 108, 255, 0.05) 28.54%, rgba(157, 108, 255, 0.2) 59.33%, rgba(157, 108, 255, 0.05) 99.99%);
+  --color-gradient-button: linear-gradient(135deg, var(--color-brand-alpha-40) 0%, var(--color-brand-light-alpha-30) 50%, var(--color-brand-light-alpha-40) 100%);
+  --color-gradient-button-hover: linear-gradient(135deg, var(--color-brand-alpha-50) 0%, var(--color-brand-light-alpha-40) 50%, var(--color-brand-light-alpha-50) 100%);
+  --color-surface-alpha-80: rgba(28, 24, 36, 0.8);
+  --color-text-primary-alpha-10: rgba(255, 255, 255, 0.1);
+  --color-text-primary-alpha-15: rgba(255, 255, 255, 0.15);
+
+  /* Video & UI */
+  --color-video-background: var(--color-background);
+  --color-video-border: #7d68a8;
+  --color-grid-overlay: rgba(255, 255, 255, 0.035);
+
+  /* Integrations / legacy */
+  --mito-light-blue: #e8ebf8;
+  --mito-gray: #494650;
+  --jupyter-orange: #f37726;
+  --streamlit-red: #ff4b4b;
+
+  /* Shadows (neutral overlay) */
+  --shadow-overlay: rgba(0, 0, 0, 0.25);
+
+  /* Hero content left margin - shared between hero_content_container and carousel */
+  --hero-content-left-margin: 2rem;
+
+  /* 
+    We can't currently use css variables in media queries unforuntetly! 
+    See here: https://bholmes.dev/blog/alternative-to-css-variable-media-queries/
+
+    So we leave documentation here to say that the breakpoint used in this project
+    to swtich between mobile and desktop views is 50rem. It should be used everywhere!
+  */
+}
+
+/* 
+  Import Graphik font
+*/
+
+@font-face {
+  font-family: "Graphik";
+  src: url("/fonts/Graphik/GraphikRegular.otf");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Graphik";
+  src: url("/fonts/Graphik/GraphikMedium.otf");
+  font-style: medium;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Graphik";
+  src: url("/fonts/Graphik/GraphikSemibold.otf");
+  font-style: semibold;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gerlik";
+  src: url("/fonts/Gerlick/Gerlick400.otf");
+  font-style: semibold;
+  font-weight: 400;
+  font-display: swap;
+}
+
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  background-color: var(--color-background);
+  font-size: 8px;
+
+  /* 
+    Overflow-x: hidden was important for the Tweets section to work properly. It cut the tweets off at the border of the page
+    instead of expanding the page, eww!
+
+    However, in order to make the Excel to Python table of contents work properly, using position: sticky, we had to remove overflow:hidden. 
+    The position: sticky was not working properly because: 
+
+    1. position: sticky; is not functioning because it's within a container that has a parent (body in this case) with overflow: hidden;. 
+    The overflow: hidden; style on the body creates a new block formatting context that prevents position: sticky; from working as it's supposed to.
+
+    2. The overflow: visible; on the immediate parent of the sticky element doesn't negate the overflow: hidden; on the body. 
+    It's the overflow: hidden; on the body that's causing the issue.
+    
+  overflow-x: hidden;
+  */
+  width: 100vw;
+
+  /* 
+    Make clicking a link to navigate to another part of the page, 
+    a smooth scroll instead of jumping. This is nice for the plans FAQ 
+    that links back to the pro plan. 
+
+    However, adding this lead to behavior where using the navbar to 
+    switch between pages didn't start the new page at the top. See
+    here: https://stackoverflow.com/a/68769366/14993381
+
+    scroll-behavior: smooth;
+  */
+}
+
+/* Set default margin and padding to 0 */
+body,
+h1,
+h2,
+h3,
+p,
+ol,
+ul,
+li,
+a,
+button {
+  margin: 0;
+  padding: 0;
+  font-family: Graphik;
+}
+
+.img, .video {
+  display: block;
+  max-width: 100%;
+}
+
+section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+section + section {
+  margin-top: 12rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  border: none; 
+}
+
+h1 {
+  color: var(--color-text-primary);
+  font-size: 3rem;
+  font-family: Graphik;
+  font-style: semibold;
+}
+
+h2 {
+  color: var(--color-text-primary);
+  font-size: 2.5rem;
+  font-family: Graphik;
+  font-style: semibold;
+}
+
+h3 {
+  color: var(--color-text-primary);
+  font-size: 2rem;
+  font-family: Graphik;
+  font-style: semibold;
+}
+
+/* Decorative script text — shared across Enterprise, tagline, etc. */
+.decorativeText {
+  font-family: "PP Editorial New, sans-serif";
+  font-size: 2.5rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-text-secondary);
+}
+
+p,  li {
+  font-size: 2rem;
+  line-height: 1.5;
+}
+
+p, li {
+  margin-top: 3rem;
+  color: var(--color-text-secondary);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  display: inline-block
+}
+
+.quote {
+  font-style: italic;
+}
+
+.only-on-desktop-inline-block,
+.display-desktop-only-flex,
+.only-on-desktop {
+  display: none !important;
+}
+
+.only-on-mobile {
+  display: flex !important;
+}
+
+.only-on-mobile-block {
+  display: block !important;
+}
+
+.only-on-mobile-inline-block {
+  display: inline-block !important;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+@media only screen and (min-width: 50em) {
+  html,body {
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  p, li {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  p {
+    margin-top: 2rem;
+  }
+
+  .code-highlight {
+    font-family: monospace;
+    background: -webkit-linear-gradient(-90deg, var(--color-brand), var(--color-glow-brand));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: var(--color-text-primary);
+  }
+
+  section + section {
+    margin-top: 10rem;
+  }
+
+  .animate-fade-in-up + .animate-fade-in-up {
+    margin-top: 10rem;
+  }
+
+  .display-inline-block {
+    display: inline-block !important;
+  }
+
+  .only-on-desktop-inline-block {
+    display: inline-block !important;
+  }
+
+  .only-on-desktop {
+    display: block !important;
+  }
+
+  .display-desktop-only-flex {
+    display: flex !important;
+  }
+
+  .only-on-mobile,
+  .only-on-mobile-block,
+  .only-on-mobile-inline-block {
+    display: none !important;
+  }
+
+  .flex-row-desktop-only {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .margin-top-3rem-mobile-only {
+    margin-top: 0px;
+  }
+
+}
+
+.center {
+  text-align: center;
+}
+
+.vertical-center {
+  display: flex;
+  align-items: center;
+}
+
+/* 
+  Text styles
+*/
+
+.text-highlight {
+  color: var(--color-purple)
+}
+
+.highlight-on-hover:hover {
+  color: var(--color-purple)
+}
+
+.text-primary {
+  color: var(--color-text-primary);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-dark {
+  color: var(--color-background);
+}
+
+.text-twitter-blue {
+  color: var(--color-twitter-blue)
+}
+
+.text-color-purple {
+  color: var(--color-purple)
+}
+
+.text-color-jupyter-orange {
+  color: var(--jupyter-orange);
+}
+
+.text-unselectable {
+  user-select: none;
+}
+
+a.anchor {
+  display: block;
+  position: relative;
+  top: -250px;
+  visibility: hidden;
+}
+
+.text-color-streamlit-red {
+  color: var(--streamlit-red)
+}
+
+.code-background {
+  font-family: monospace;
+  background-color: var(--color-text-secondary);
+  color: var(--mito-gray);
+  font-size: 1rem;
+  padding: .25rem .5rem;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.code-background:hover {
+  background-color: var(--color-light-purple);
+}
+
+/* We don't want a video player to appear below the gifs on our blog, and so we globally hide them */
+.kg-video-player {
+  display: none;
+}
+
+.kg-embed-card > iframe {
+  width: 100%;
+  height: 250px;
+}
+
+/* We want rounded borders on images in our blog*/
+.kg-image {
+  border-radius: 3px;
+}
+
+/* 
+  Apply basic styling to the code displayed in the blog. Because the slug is not prepended
+  to the class names of the code blocks, we cannot apply this styling in [slug].module.css.
+  So instead, we apply it here, taking care to only apply the styling to code cells that have 
+  the an ancestor with the class .blog-content so we don't accidentally apply this styling to
+  other code.
+*/
+.blog-content pre[class*=language-] {
+  margin-top: 2rem !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: 100%;
+}
+
+.blog-content .code[class*=language-], .blog-content pre[class*=language-] {
+  text-shadow: none !important;
+  width: 100%; 
+  overflow-x: auto; /* Enables horizontal scrolling */
+}
+
+.blog-content figcaption {
+  font-size: .8rem !important;
+  color: var(--color-text-secondary) !important;
+  text-align: center;
+}
+
+/*
+ * Scroll-triggered fade-in-up animation.
+ * Use with useInView: add .animate-fade-in-up and toggle .is-visible when in view.
+ * Stagger via --delay (e.g. style={{ ['--delay']: '100ms' }}).
+ * Disabled when prefers-reduced-motion: reduce.
+ */
+.animate-fade-in-up {
+  opacity: 0;
+  transform: translateY(2rem);
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s ease-out;
+  transition-delay: var(--delay, 0ms);
+}
+
+.animate-fade-in-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Preserve section spacing when sections are wrapped for scroll animation */
+.animate-fade-in-up + .animate-fade-in-up {
+  margin-top: 12rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-fade-in-up.is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

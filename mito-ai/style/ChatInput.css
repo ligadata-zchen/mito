@@ -1,0 +1,150 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.chat-input-container {
+  position: sticky;
+  bottom: 0;
+  margin: 10px 0;
+  margin-top: auto;
+  background-color: var(--chat-user-message-background-color);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+  width: 100%;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-input-container.editing {
+  margin-top: 0;
+}
+
+.chat-input-container.drag-over {
+  border: 2px dashed var(--purple-500);
+  transform: scale(1.02);
+}
+
+/* DataFrame viewer → Mito AI context: pulse glow on the input shell only */
+.chat-input-container.chat-input-container--attention-glow {
+  animation: mito-ai-chat-input-attention-glow 0.75s ease-in-out 1;
+}
+
+@keyframes mito-ai-chat-input-attention-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.08),
+      0 2px 4px rgba(0, 0, 0, 0.06),
+      0 0 0 1px rgba(0, 0, 0, 0.02);
+  }
+  50% {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.08),
+      0 2px 4px rgba(0, 0, 0, 0.06),
+      0 0 0 1px rgba(157, 108, 255, 0.45),
+      0 0 0 3px rgba(157, 108, 255, 0.38),
+      0 0 20px 5px rgba(157, 108, 255, 0.22);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-input-container.chat-input-container--attention-glow {
+    animation: mito-ai-chat-input-attention-glow-static 1s ease forwards;
+  }
+
+  @keyframes mito-ai-chat-input-attention-glow-static {
+    0%,
+    100% {
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.06),
+        0 0 0 1px rgba(0, 0, 0, 0.02),
+        inset 0 0 0 2px rgba(157, 108, 255, 0.65);
+    }
+  }
+}
+
+.chat-input-text-area-container {
+  position: relative;
+  height: min-content;
+}
+
+.chat-input {
+  outline: none;
+  border: none;
+  resize: none;
+  width: 100%;
+  padding: 10px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  flex-shrink: 0 !important;
+  background-color: var(--chat-user-message-background-color);
+  font-size: 12px;
+  font-weight: 400;
+  font-family: var(--jp-ui-font-family);
+  line-height: 1.2;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.active-cell-preview-container {
+  padding: 10px;
+}
+
+.chat-input-container:focus-within {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.12),
+    0 8px 16px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.chat-input:focus {
+  color: var(--jp-ui-font-color1);
+}
+
+.chat-input::placeholder {
+  color: var(--jp-ui-font-color2);
+  transition: color 0.2s ease;
+}
+
+.chat-input:focus::placeholder {
+  color: var(--jp-ui-font-color3);
+}
+
+.context-button {
+  display: flex;
+  align-items: center;
+  background-color: var(--jp-layout-color2);
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 12px;
+  height: var(--chat-context-button-height);
+  cursor: pointer;
+  color: var(--jp-content-font-color1);
+  transition: background-color 0.2s ease;
+}
+
+.context-button:hover {
+  background-color: var(--jp-layout-color3);
+}
+
+/* Disabled state styles */
+.chat-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--jp-layout-color2);
+}
+
+.context-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--jp-layout-color2);
+}
+
+.context-button:disabled:hover {
+  background-color: var(--jp-layout-color2);
+}

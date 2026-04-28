@@ -1,0 +1,28 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+}
+
+.container > p:first-child {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--color-text-primary);
+}
+
+.item {
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    line-height: 1.3;
+}
+
+.indent {
+    margin-left: 0.75rem;
+}

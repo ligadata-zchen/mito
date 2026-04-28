@@ -1,0 +1,21 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+
+.spacing-col {
+    /* 
+        We hide the overflow from the items in a Column, and
+        also cut off text with a nice ellipsis.
+    */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Custom CSS for the toolbar */
+.mito-graph-configuration-container .text-body-1,
+.mito-graph-configuration-container .spacing-col {
+    width: min-content;
+}

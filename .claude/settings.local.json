@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest mito_ai_core/tests/test_model_utils.py -q)",
+      "Bash(python -c \"from mito_ai_core.utils.model_utils import STANDARD_MODELS, ANTHROPIC_MODEL_ORDER, get_fast_model_for_selected_model, get_smartest_model_for_selected_model; print\\('STANDARD_MODELS:', STANDARD_MODELS\\); print\\('ANTHROPIC_MODEL_ORDER:', ANTHROPIC_MODEL_ORDER\\); print\\('fast for opus:', get_fast_model_for_selected_model\\('claude-opus-4-6'\\)\\); print\\('smart for haiku:', get_smartest_model_for_selected_model\\('claude-haiku-4-5-20251001'\\)\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('c:/aif2/mito/mito-ai-core/mito_ai_core/utils/model_utils.py'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(npx --prefix . tsc --noEmit -p tsconfig.json)",
+      "Bash(python -c 'import ast; ast.parse\\(open\\(r'\\\\''__TRACKED_VAR__'\\\\''\\).read\\(\\)\\); print\\('\\\\''OK __TRACKED_VAR__'\\\\''\\)')",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

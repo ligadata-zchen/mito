@@ -1,0 +1,40 @@
+name: Test - mitosheet mypy
+
+on:
+  push:
+    branches: [ dev ]
+    paths:
+      - 'mitosheet/**'
+  pull_request:
+    paths:
+      - 'mitosheet/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-mitosheet-mypy:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: pip
+        cache-dependency-path: mitosheet/setup.py
+    - name: Install dependencies
+      run: |
+        cd mitosheet
+        pip install -e ".[test]"
+    - name: Check types with MyPY
+      run: |
+        mypy mitosheet/mitosheet/ --ignore-missing-imports --disallow-untyped-calls --disallow-incomplete-defs --no-implicit-optional
+        mypy mitosheet/dev/ --ignore-missing-imports --disallow-untyped-calls --disallow-incomplete-defs --no-implicit-optional
+        mypy mitoinstaller/mitoinstaller/ --ignore-missing-imports --disallow-untyped-calls --disallow-incomplete-defs --no-implicit-optional
+        mypy deployment/bump_version.py deployment/deploy.py  --ignore-missing-imports --disallow-untyped-calls --disallow-incomplete-defs --no-implicit-optional

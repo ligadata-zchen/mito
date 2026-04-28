@@ -1,0 +1,39 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+const MITO_AI = 'mito_ai'
+
+// Note that this command is also used by the mitosheet package to check 
+// if the Mito AI extension is enabled. Make sure to update it there if you change it here.
+export const COMMAND_MITO_AI_OPEN_CHAT = `${MITO_AI}:open-chat`
+/** Adds DataFrame output viewer cell range to chat additional context (mitosheet MitoViewer). */
+export const COMMAND_MITO_AI_ADD_DATAFRAME_VIEWER_SELECTION = `${MITO_AI}:add-dataframe-viewer-selection`
+export const COMMAND_MITO_AI_PREVIEW_LATEST_CODE = `${MITO_AI}:preview-latest-code`
+export const COMMAND_MITO_AI_APPLY_LATEST_CODE = `${MITO_AI}:apply-latest-code`
+export const COMMAND_MITO_AI_REJECT_LATEST_CODE = `${MITO_AI}:reject-latest-code`
+export const COMMAND_MITO_AI_SEND_MESSAGE = `${MITO_AI}:send-message`
+export const COMMAND_MITO_AI_SEND_EXPLAIN_CODE_MESSAGE = `${MITO_AI}:send-explain-code-message`
+export const COMMAND_MITO_AI_SEND_DEBUG_ERROR_MESSAGE = `${MITO_AI}:send-debug-error-message`
+export const COMMAND_MITO_AI_SEND_AGENT_MESSAGE = `${MITO_AI}:send-agent-message`
+export const COMMAND_MITO_AI_START_NEW_CHAT = `${MITO_AI}:start-new-chat`
+
+export const COMMAND_MITO_AI_CELL_TOOLBAR_ACCEPT_CODE = `toolbar-button:accept-code`
+export const COMMAND_MITO_AI_CELL_TOOLBAR_REJECT_CODE = `toolbar-button:reject-code`
+
+// Beta mode commands
+export const COMMAND_MITO_AI_BETA_MODE_ENABLED = `${MITO_AI}:beta-mode-enabled`
+
+// Streamlit commands
+export const COMMAND_MITO_AI_PREVIEW_AS_STREAMLIT = 'mito-ai:preview-as-streamlit';
+
+// Chart Wizard commands
+export const COMMAND_MITO_AI_OPEN_CHART_WIZARD = 'mito-ai:open-chart-wizard';
+
+// Comment commands
+export const COMMAND_MITO_AI_ADD_CODE_COMMENT = `${MITO_AI}:add-code-comment`
+export const COMMAND_MITO_AI_ADD_OUTPUT_COMMENT = `${MITO_AI}:add-output-comment`
+export const COMMAND_MITO_AI_UPDATE_COMMENT_INDICATORS = `${MITO_AI}:update-comment-indicators`
+export const COMMAND_MITO_AI_REMOVE_CODE_COMMENT = `${MITO_AI}:remove-code-comment`
+export const COMMAND_MITO_AI_REMOVE_OUTPUT_COMMENT = `${MITO_AI}:remove-output-comment`

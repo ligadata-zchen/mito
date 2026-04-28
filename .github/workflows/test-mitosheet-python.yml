@@ -1,0 +1,63 @@
+name: Test - mitosheet pytest
+
+on:
+  push:
+    branches: [ dev ]
+    paths:
+      - 'mitosheet/**'
+      - '.github/workflows/test-mitosheet-python.yml'
+  pull_request:
+    paths:
+      - 'mitosheet/**'
+      - '.github/workflows/test-mitosheet-python.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-mitosheet-python:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.13"]
+        optional_feature_dependencies: [False, True] 
+            
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: pip
+        cache-dependency-path: mitosheet/setup.py
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: mitosheet/package-lock.json
+    - name: Install dependencies
+      run: |
+        cd mitosheet
+        pip install -e ".[test]"
+    - name: Install optional feature dependencies
+      if: ${{ matrix.optional_feature_dependencies }}
+      run: |
+        cd mitosheet
+        pip install -e ".[optional_feature_dependencies]"
+    - name: Install JS dependencies and build
+      run: |
+        cd mitosheet
+        jlpm install
+        jlpm run build
+    - name: Test with pytest 
+      run: |
+        cd mitosheet
+        pytest
+      env:
+        SNOWFLAKE_USERNAME: ${{ secrets.PYTEST_SNOWFLAKE_USERNAME }}
+        SNOWFLAKE_PASSWORD: ${{ secrets.PYTEST_SNOWFLAKE_PASSWORD }}
+        SNOWFLAKE_ACCOUNT: ${{ secrets.PYTEST_SNOWFLAKE_ACCOUNT }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

@@ -1,0 +1,110 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+import { test, expect } from '../fixtures';
+import {
+  createAndRunNotebookWithCells,
+  getCodeFromCell,
+  waitForIdle,
+  selectCell
+} from '../jupyter_utils/jupyterlab_utils';
+import {
+  clickOnMitoAIChatTab,
+  sendMessagetoAIChat,
+  waitForMitoAILoadingToDisappear,
+  startNewMitoAIChat,
+  turnOnAgentMode,
+  sendMessageToAgent,
+  waitForAgentToFinish,
+  getNotebookCode,
+  clickPreviewButton,
+  clickAcceptButton,
+  clearMitoAIChatInput,
+  selectModel
+} from '../mitoai_ui_tests/utils';
+import { 
+  GPT_4_1_DISPLAY_NAME, 
+  GPT_4_1_MODEL_NAME, 
+  GPT_5_2_DISPLAY_NAME,
+  GPT_5_2_MODEL_NAME,
+  CLAUDE_HAIKU_DISPLAY_NAME,
+  CLAUDE_HAIKU_MODEL_NAME,
+  GEMINI_3_FLASH_DISPLAY_NAME,
+  GEMINI_3_FLASH_MODEL_NAME,
+  GEMINI_3_1_PRO_MODEL_NAME,
+  GEMINI_3_1_PRO_DISPLAY_NAME,
+ } from '../../mito-ai/src/utils/models';
+
+// Define test configurations for different models
+const modelConfigs = [
+  { name: GPT_4_1_DISPLAY_NAME, provider: GPT_4_1_MODEL_NAME },
+  { name: GPT_5_2_DISPLAY_NAME, provider: GPT_5_2_MODEL_NAME },
+  { name: CLAUDE_HAIKU_DISPLAY_NAME, provider: CLAUDE_HAIKU_MODEL_NAME },
+  { name: GEMINI_3_FLASH_DISPLAY_NAME, provider: GEMINI_3_FLASH_MODEL_NAME },
+  { name: GEMINI_3_1_PRO_DISPLAY_NAME, provider: GEMINI_3_1_PRO_MODEL_NAME },
+];
+
+// Run tests for each model configuration
+modelConfigs.forEach(({ name: modelName, provider }) => {
+  test.describe.serial(`${provider} Model Tests`, () => {
+    test('chat mode basic functionality', async ({ page }) => {
+      // Create a single notebook for all tests
+      await createAndRunNotebookWithCells(page, [`# Test notebook for ${provider}`]);
+      await waitForIdle(page);
+
+      // Switch to the specified model
+      await selectModel(page, modelName);
+
+      // Start a new chat
+      await clickOnMitoAIChatTab(page);
+      await startNewMitoAIChat(page);
+      await clearMitoAIChatInput(page);
+
+      // Select the first cell
+      await selectCell(page, 0);
+
+      // Send a message and verify the response
+      await sendMessagetoAIChat(page, 'print hello world');
+      await waitForMitoAILoadingToDisappear(page);
+
+      // Accept the generated code
+      await clickPreviewButton(page);
+      await clickAcceptButton(page);
+      await waitForIdle(page);
+
+      // Verify the code was added to the notebook
+      const code = await getCodeFromCell(page, 0);
+      const codeLower = code.toLowerCase();
+      expect(codeLower).toContain('print');
+      expect(codeLower).toContain('hello');
+      expect(codeLower).toContain('world');
+    });
+
+    test('agent mode basic functionality', async ({ page }) => {
+      // Create a single notebook for all tests
+      await createAndRunNotebookWithCells(page, [`# Test notebook for ${provider}`]);
+      await waitForIdle(page);
+
+      // Switch to the specified model
+      await selectModel(page, modelName);
+
+      // Start a new chat and switch to agent mode
+      await clickOnMitoAIChatTab(page);
+      await startNewMitoAIChat(page);
+      await turnOnAgentMode(page);
+
+      // Send a message to the agent
+      await sendMessageToAgent(page, 'print hello world');
+      await waitForAgentToFinish(page);
+
+      // Verify the code was added to the notebook
+      const code = await getNotebookCode(page);
+      const joinedCode = code.join('').toLowerCase();
+      expect(joinedCode).toContain('print');
+      expect(joinedCode).toContain('hello');
+      expect(joinedCode).toContain('world');
+    });
+  });
+});

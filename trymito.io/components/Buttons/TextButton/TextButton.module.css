@@ -1,0 +1,118 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+
+.text_button {
+  font-style: medium;
+  font-weight: 400;
+  font-size: 2rem;
+  max-width: 20rem;
+  padding: 10px 15px;
+  border-radius: 10px;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  /* 
+    This is required to make the TextButton the same exact height
+    across the a tag and button implmentations! Without it, the max-width doesn't
+    apply to the a tag.
+  */
+  display: inline-block;
+}
+
+.secondary {
+  color: var(--color-text-primary);
+  background-color: none;
+
+  text-decoration: underline;
+  text-decoration-color: var(--color-purple);
+  text-decoration-thickness: 0.2em;
+  text-underline-offset: 0.2em;
+}
+
+.secondary:hover {
+  color: var(--color-light-purple);
+}
+
+.highlight {
+  color: var(--color-text-primary);
+  background-color: var(--color-purple);
+}
+
+.highlight:hover {
+  background-color: var(--color-light-purple);
+}
+
+.primary {
+  color: var(--color-background);
+  background-color: var(--color-text-primary);
+}
+
+.primary:hover {
+  background-color: var(--color-text-secondary);
+}
+
+.purple {
+  color: var(--color-text-primary);
+  background: var(--color-gradient-button);
+  border: 1px solid var(--color-brand-alpha-40);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 400;
+  box-shadow:
+    0 2px 8px var(--shadow-overlay),
+    0 1px 4px var(--shadow-overlay),
+    0 1px 8px var(--color-brand-alpha-15),
+    inset 0 1px 0 var(--color-text-primary-alpha-10);
+}
+
+.purple:hover {
+  background: var(--color-gradient-button-hover);
+  border-color: var(--color-brand-alpha-60);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 16px var(--shadow-overlay),
+    0 2px 8px var(--shadow-overlay),
+    0 2px 12px var(--color-brand-alpha-20),
+    inset 0 1px 0 var(--color-text-primary-alpha-15);
+}
+
+.purple:active {
+  transform: translateY(0px);
+  transition-duration: 0.1s;
+}
+
+.text_button button,
+.text_button a {
+  box-sizing: border-box;
+  line-height: 2.5rem;
+}
+
+.button_size_small {
+  max-width: 10rem;
+  font-size: 1.25rem;
+  padding: 5px 10px;
+
+}
+
+@media only screen and (min-width: 50em) {
+
+  .large {
+    font-size: 1.5rem;
+  }
+
+  .small {
+    font-size: 1rem;
+  }
+
+  .text_button button,
+  .text_button a {
+    line-height: 2rem;
+  }
+}

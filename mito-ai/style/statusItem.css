@@ -1,0 +1,68 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.mito-ai-status-button.jp-Button.jp-mod-minimal {
+  background-color: transparent;
+  color: var(--jp-inverse-layout-color2);
+}
+
+.mito-ai-status-button.jp-Button.jp-mod-minimal:hover {
+  background-color: var(--jp-layout-color3);
+  color: var(--jp-inverse-layout-color1);
+}
+
+.jp-StatusBar-Item.jp-mod-clicked > .mito-ai-status-button {
+  color: var(--jp-ui-inverse-font-color1);
+}
+
+.jp-StatusBar-Item.jp-mod-clicked > .mito-ai-status-button:hover {
+  background-color: transparent;
+  color: var(--jp-ui-inverse-font-color1);
+}
+
+.jp-StatusBar-Item.jp-mod-clicked:hover > .mito-ai-status-button {
+  color: var(--jp-ui-inverse-font-color0);
+}
+
+.mito-ai-status-button.jp-Button.jp-mod-minimal.mito-ai-error {
+  color: var(--jp-warn-color1);
+}
+
+.mito-ai-status-button.jp-Button.jp-mod-minimal.mito-ai-error:hover,
+.jp-StatusBar-Item.jp-mod-clicked > .mito-ai-status-button.mito-ai-error,
+.jp-StatusBar-Item.jp-mod-clicked > .mito-ai-status-button.mito-ai-error:hover,
+.jp-StatusBar-Item.jp-mod-clicked:hover > .mito-ai-status-button.mito-ai-error {
+  color: var(--jp-warn-color2);
+}
+
+.mito-ai-status-popup {
+  padding: 4px 12px;
+  padding-bottom: 40px;
+  background-color: var(--jp-layout-color1);
+  box-shadow: var(--jp-toolbar-box-shadow);
+  z-index: 2;
+  font-size: var(--jp-ui-font-size1);
+  min-width: 150px;
+  max-width: 300px;
+}
+
+.mito-ai-status-popup-table-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mito-ai-status-popup-table-row > p {
+  margin: 4px;
+}
+
+.mito-ai-status-ready {
+  color: var(--jp-success-color1);
+}
+
+.mito-ai-status-error {
+  color: var(--jp-warn-color1);
+}

@@ -1,0 +1,119 @@
+{
+    "slug": ["functions", "math", "EXP"],
+    "functionNameShort": "EXP, POWER",
+    "functionNameLong": "Exponential and Power",
+    "relatedFunctions": ["SQRT"],
+    "purpose": "Calculate the e raised to the power of a given number",
+    "titleCardParagraphs": [
+        "Excel's EXP function calculates the exponential of a given number, using the constant 'e' as the base. This function plays a vital role in various fields such as finance, engineering, and statistics.",
+        "This page explains how to use Excel's EXP function in Python using pandas."
+    ],
+    "excelExplanation": {
+        "paragraphs": [
+            "The EXP function in Excel takes a single argument and returns 'e' raised to the power of that number.",
+            "=EXP(number)"
+        ],
+        "syntaxTable": [
+            {
+                "parameter": "number",
+                "description": "The exponent to which the constant 'e' is raised.",
+                "dataType": "number"
+            }
+        ],
+        "examplesTable": [
+            {
+                "formula": "=EXP(1)",
+                "description": "Calculate the exponential of 1.",
+                "result": "2.71828182845905"
+            },
+            {
+                "formula": "=EXP(0)",
+                "description": "Calculate the exponential of 0.",
+                "result": "1"
+            }
+        ]
+    },
+    "equivalentCode": {
+        "introParagraphs": [
+            "To replicate the EXP or POWER function in Excel using Python and pandas, here are some common implementations:"
+        ],
+        "codeSections": [
+            {
+                "title": "Applying EXP to a single value",
+                "shortTitle": "EXP single value",
+                "paragraphs": [
+                    "To calculate the exponential of a single number in Excel, you would use the formula =EXP(number).",
+                    "In pandas, you can use the numpy library's exp function to accomplish the same task"
+                ],
+                "codeLines": [
+                    "import numpy as np",
+                    "result = np.exp(2)"
+                ]
+            },
+            {
+                "title": "Applying EXP to an entire column",
+                "shortTitle": "EXP entire column",
+                "paragraphs": [
+                    "To calculate the exponential of an entire column in Excel, you would drag the EXP formula, =EXP(A1) dragged down the entire column.",
+                    "In pandas, apply the numpy exp function to the whole column:"
+                ],
+                "codeLines": [
+                    "import numpy as np",
+                    "df['Exponential'] = np.exp(df['number'])"
+                ]
+            },
+            {
+                "title": "Applying POWER to a single value",
+                "shortTitle": "POWER single value",
+                "paragraphs": [
+                    "Unlike the EXP function, the POWER function in Excel allows you to specify the base of the exponent. To calculate the exponential of a single number in Excel, you would use the formula =POWER(number, power).",
+                    "In Python, you can use the built in `**` operator. For example, to calculate 2 to the power of 3:"
+                ],
+                "codeLines": [ 
+                    "result = 2 ** 3"
+                ]
+            },
+            {
+                "title": "Applying POWER to an entire column",
+                "shortTitle": "POWER entire column",
+                "paragraphs": [
+                    "To calculate the exponential of an entire column in Excel, you would drag the POWER formula, =POWER(A1, power) dragged down the entire column.",
+                    "In pandas, apply the built in `pow` function to the whole column. For example, to calculate the cube of each number in the 'number' column:"
+                ],
+                "codeLines": [
+                    "df['Exponential'] = df['number'] ** 3"
+                ]
+            },
+            {
+                "title": "Applying POWER to an entire column with a variable exponent",
+                "shortTitle": "variable exponent",
+                "paragraphs": [
+                    "If instead of using a constant value as the exponent, like 3, you want to use a value from another column, you can use the apply function to apply the `pow` function to each row of the dataframe."
+                ],
+                "codeLines": [
+                    "df['Exponential'] = df['number'] ** df['power']"
+                ]
+            }
+        ]
+    },
+    "commonMistakes": {
+        "introParagraphs": [
+            "While using the EXP function in pandas, certain mistakes are commonly made. Here are some and how to rectify them."
+        ],
+        "codeSections": [
+            {
+                "title": "Using Log Base 10",
+                "shortTitle": "Log Base 10",
+                "paragraphs": [
+                    "It's easy to confuse the natural logarithm (base 'e') with the logarithm base 10. Remember that np.exp uses base e, not base 10."
+                ],
+                "codeLines": []
+            }
+        ]
+    },
+    "mitoCTA":{
+        "codeLines": [
+            "df['Exponential'] = EXP(df['number'])"
+        ]
+    }
+}

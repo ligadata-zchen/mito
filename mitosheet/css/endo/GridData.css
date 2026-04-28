@@ -1,0 +1,111 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+
+/* Row */
+.mito-grid-row {
+    display: flex;
+    user-select: none;
+}
+
+.mito-grid-row.mito-grid-row-exit {
+    pointer-events: none;
+    animation: mito-row-delete-exit 0.55s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mito-grid-row.mito-grid-row-exit {
+        animation: none;
+        opacity: 0;
+    }
+}
+
+
+/* Cell */
+.mito-grid-cell {
+    height: var(--cell-height);
+    padding: 0px 5px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+
+    box-sizing: border-box;
+    
+    /* Align vertically */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.mito-grid-cell.mito-grid-column-enter {
+    animation: mito-column-enter 0.6s ease both;
+}
+
+.mito-grid-cell.mito-grid-column-exit {
+    pointer-events: none;
+    animation: mito-column-delete-exit 0.55s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mito-grid-cell.mito-grid-column-enter {
+        animation: none;
+    }
+    .mito-grid-cell.mito-grid-column-exit {
+        animation: none;
+        opacity: 0;
+    }
+}
+
+.mito-grid-cell:hover:not(.recon) {
+    background-color: var(--mito-highlight-medium);
+}
+
+/* We make selected cells look different on even and odd rows */
+.mito-grid-row-even .mito-grid-cell-selected:not(.mito-grid-cell-conditional-format-background-color):not(.recon) {
+    background-color: color-mix(in srgb, var(--mito-highlight) 25%, transparent);
+}
+.mito-grid-row-odd .mito-grid-cell-selected:not(.mito-grid-cell-conditional-format-background-color):not(.recon) {
+    background-color: color-mix(in srgb, var(--mito-highlight-medium) 50%, transparent);
+}   
+
+.mito-grid-cell-hidden {
+    visibility: hidden;
+}
+
+.right-align-number-series {
+    /* Right align number series */
+    text-align: right;
+}
+
+.created-recon-background-color {
+    background-color: var(--mito-recon-created-background-color);
+    color: var(--mito-recon-text-color);
+}
+
+.created-recon-background-color-dark {
+    background-color: var(--mito-recon-created-background-color-dark);
+    color: var(--mito-recon-text-color);
+}
+
+.modified-recon-background-color {
+    background-color: var(--mito-recon-modified-background-color);
+    color: var(--mito-recon-text-color);
+}
+
+.modified-recon-background-color-dark {
+    background-color: var(--mito-recon-modified-background-color-dark);
+    color: var(--mito-recon-text-color);
+}
+
+/* ── Ghost / AI-suggested cells ── */
+.mito-grid-cell-suggested {
+    opacity: 0.35;
+    pointer-events: none;
+    background-color: var(--mito-background-highlight, #f5f5f5) !important;
+    border-style: dashed !important;
+    color: var(--mito-text);
+}

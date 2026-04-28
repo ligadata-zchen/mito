@@ -1,0 +1,272 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+/* ModelSelector.css - responsive design with compact mode */
+
+.model-selector {
+  position: relative;
+  flex: 0 0 auto;
+  margin: 0 8px;
+  height: 20px; /* Match height of other elements */
+  display: flex;
+  align-items: center; /* Center vertically */
+  color: var(--jp-ui-font-color2);
+}
+
+.model-selector:hover {
+  color: var(--jp-ui-font-color1);
+}
+
+.model-selector-dropdown {
+  position: relative;
+  height: 20px; /* Fixed height to match other elements */
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center; /* Ensure content is vertically centered */
+  width: min-content;
+  max-width: 18ch;
+}
+
+
+.selected-model {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.model-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  line-height: 1;
+}
+
+.dropdown-arrow {
+  font-size: 8px;
+  transition: transform 0.2s;
+  margin-left: 4px;
+  flex-shrink: 0; /* Prevent arrow from shrinking */
+}
+
+/* Model options dropdown */
+.model-options {
+  position: absolute;
+  bottom: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+  background-color: var(--jp-layout-color1);
+  border: 1px solid var(--jp-layout-color2);
+  border-radius: 4px;
+  margin-bottom: 4px;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: auto;
+}
+
+.model-option {
+  padding: 4px 8px;
+  font-size: 12px;
+  /* Keep this size for readability */
+  color: var(--jp-content-font-color1);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  /* Prevent text wrapping */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.model-option-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.model-type-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.model-option:hover {
+  background-color: var(--jp-layout-color2);
+}
+
+.model-option.selected {
+  background-color: var(--jp-layout-color2);
+  color: var(--jp-brand-color2);
+}
+
+/* When inside chat-controls - ensure proper alignment with other controls */
+.chat-controls .model-selector {
+  height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.chat-controls .model-selector-dropdown {
+  height: 20px;
+  align-self: center;
+}
+
+/* Ensure dropdown appears above other elements */
+.model-options {
+  z-index: 1010;
+  /* Higher z-index to ensure visibility */
+}
+
+.model-name {
+  display: inline-block;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+/* On wider screens, show only the name of the model*/
+.model-icon {
+  display: none;
+}
+
+.model-name {
+  display: inline;
+}
+
+/* On compact screens, show only the icon */
+@container (max-width: 260px) {
+
+  /* Shift the dropdown to the left to help prevent right-edge overflow */
+  .model-options {
+    left: -40px;
+  }
+
+  .model-icon {
+    display: inline;
+  }
+
+  .model-name {
+    display: none;
+  }
+}
+
+/* Model tooltip - appears to the right of the dropdown, rendered via portal */
+.model-tooltip {
+  position: fixed;
+  top: var(--tooltip-top, 200px);
+  left: var(--tooltip-left, 200px);
+  background-color: var(--jp-layout-color1);
+  border: 1px solid var(--jp-layout-color2);
+  border-radius: 4px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10000; /* High z-index to appear above Jupyter notebook */
+  width: 280px;
+  pointer-events: none; /* Prevent tooltip from blocking mouse events */
+}
+
+.model-tooltip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.model-tooltip-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.model-tooltip-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.model-tooltip-title-icon {
+  flex-shrink: 0;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.model-tooltip-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jp-content-font-color1);
+  line-height: 1.2;
+}
+
+.model-tooltip-metadata {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  font-size: 11px;
+}
+
+.model-tooltip-metadata-item {
+  display: flex;
+  gap: 4px;
+}
+
+.model-tooltip-metadata-label {
+  color: var(--jp-content-font-color2);
+  font-weight: 500;
+}
+
+.model-tooltip-metadata-value {
+  color: var(--jp-content-font-color1);
+  font-weight: 600;
+}
+
+.model-tooltip-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.model-tooltip-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--jp-content-font-color1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.model-tooltip-bullet-list {
+  margin: 0;
+  padding-left: 16px;
+  list-style-type: disc;
+}
+
+.model-tooltip-bullet-item {
+  font-size: 12px;
+  color: var(--jp-content-font-color2);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.model-tooltip-bullet-item:last-child {
+  margin-bottom: 0;
+}

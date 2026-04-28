@@ -1,0 +1,37 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.translucent_button {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+
+    background: var(--color-brand-alpha-10);
+    border: 2px solid var(--color-brand-alpha-40);
+    box-sizing: border-box;
+    border-radius: 10px;
+    width: 125px;
+    font-size: 2rem;
+    height: 35px;
+    color: var(--color-purple);
+    
+    cursor: pointer;
+}
+
+.translucent_button:hover {
+    background: var(--color-background)
+}
+
+.translucent_button p {
+    margin-top: 0
+}
+
+@media only screen and (min-width: 50em) {
+    .translucent_button {
+        font-size: 1rem;
+    }
+    
+}

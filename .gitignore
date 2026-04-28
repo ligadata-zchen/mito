@@ -1,0 +1,139 @@
+# Ignore the uv.lock file that Cursor keeps making
+uv.lock
+
+# Ignore all the ipynb files in mitosheet and mito-ai
+mitosheet/**/*.ipynb
+mito-ai/**/*.ipynb
+
+# Ignore all the ipynb_checkpoints in mitosheet and mito-ai
+mitosheet/.ipynb_checkpoints/*
+mito-ai/.ipynb_checkpoints/*
+tests/.ipynb_checkpoints/*
+jupyterhub/.ipynb_checkpoints/*
+.ipynb_checkpoints/*
+
+# Ignore all the iframe_figures in mitosheet and mito-ai
+# These get generated when creating plotly graphs
+mitosheet/iframe_figures/*
+mito-ai/iframe_figures/*
+mito-sql-cell
+
+# Evals
+evals/reports/
+
+# Other 
+mito-ai-mcp/*.mcpb
+
+## General
+.DS_Store
+.AppleDouble
+.LSOverride
+.env
+
+## Icon must end with two \r
+Icon
+
+## Thumbnails
+._*
+
+
+## Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+## Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+
+## Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+## Dump file
+*.stackdump
+
+## Folder config file
+[Dd]esktop.ini
+
+## Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+## Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+## Windows shortcuts
+*.lnk
+
+## Python
+
+# Virtual enviornemnts
+venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+node_modules/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# Rope
+.ropeproject
+
+# Django stuff:
+*.log
+*.pot
+
+# Sphinx documentation
+docs/_build/
+mito-sql-cell/junit.xml

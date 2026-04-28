@@ -1,0 +1,27 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.ephemeral-message-container {
+    border-radius: 5px;
+    padding: 15px 20px;
+
+    background-color: var(--mito-highlight);
+}  
+
+/* The 5s must match the 6000 (5s + 1s buffer) in the setInterval function in EphemeralMessage.tsx */
+.ephemeral-message-animation {
+    animation: movein 0.5s ease forwards, moveout 0.5s 5s ease forwards;
+}
+
+@keyframes movein {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes moveout {
+    from { transform: translateX(0);    opacity: 1; }
+    to   { transform: translateX(120%); opacity: 0; }
+}
+

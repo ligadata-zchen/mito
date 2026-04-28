@@ -1,0 +1,26 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+/* 
+    This contains helpful CSS classes for flexbox
+*/
+
+.flexbox-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flexbox-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.flexbox-space-between {
+    justify-content: space-between;
+}
+
+.flexbox-justify-end {
+    justify-content: end;
+}

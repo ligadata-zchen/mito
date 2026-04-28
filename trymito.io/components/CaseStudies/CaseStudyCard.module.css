@@ -1,0 +1,18 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.case_study_card_container {
+    transition: transform .25s ease-in-out; /* Adjust duration as needed */
+    cursor: pointer;
+
+}
+
+.scale_small_on_hover:hover {
+    transform: scale(1.05);
+}
+
+.scale_normal_on_hover:hover {
+    transform: scale(1.1);
+}

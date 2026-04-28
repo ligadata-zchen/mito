@@ -1,0 +1,418 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { ReactWidget, Notification } from '@jupyterlab/apputils';
+import { ChartWizardData } from './ChartWizardPlugin';
+import { updateChartConfig, ChartConfigVariable } from './utils/parser';
+import { exportChartImage, type ExportImageFormat } from './utils/chartExport';
+import { convertChartCode, logEvent } from '../../restAPI/RestAPI';
+import { removeMarkdownCodeFormatting } from '../../utils/strings';
+import LoadingDots from '../../components/LoadingDots';
+import ToggleButton from '../../components/ToggleButton';
+import AddFieldButton from './AddFieldButton';
+import {
+    BooleanInputRow,
+    TupleInputRow,
+    NumberInputRow,
+    ColorInputRow,
+    StringInputRow,
+    isHexColor
+} from './inputs';
+import { useChartConfig, useDebouncedNotebookUpdate } from './hooks';
+import { getActiveCellID, scrollToCell } from '../../utils/notebook';
+import '../../../style/ChartWizardWidget.css';
+
+interface ChartWizardContentProps {
+    chartData: ChartWizardData | null;
+}
+
+/**
+ * Formats a variable name into a human-readable label.
+ * Converts snake_case to Title Case (e.g., "figure_size" -> "Figure Size").
+ */
+const formatVariableLabel = (variableName: string): string => {
+    return variableName
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, (l) => l.toUpperCase());
+};
+
+const ChartWizardContent: React.FC<ChartWizardContentProps> = ({ chartData }) => {
+    const [isConverting, setIsConverting] = useState(false);
+    const [isAddingField, setIsAddingField] = useState(false);
+    const [currentSourceCode, setCurrentSourceCode] = useState<string | null>(null);
+    const widgetRef = useRef<HTMLDivElement>(null);
+    const [overlayHeight, setOverlayHeight] = useState<number>(0);
+    const [isActiveCellMismatch, setIsActiveCellMismatch] = useState(false);
+    const [exportFormat, setExportFormat] = useState<ExportImageFormat>('png');
+
+    // Reset currentSourceCode when switching to a different chart
+    useEffect(() => {
+        setCurrentSourceCode(null);
+    }, [chartData?.sourceCode]);
+
+    // Track active cell changes and compare with chart cell
+    useEffect(() => {
+        if (!chartData) {
+            setIsActiveCellMismatch(false);
+            return;
+        }
+
+        const checkActiveCell = (): void => {
+            const activeCellId = getActiveCellID(chartData.notebookTracker);
+            const chartCellId = chartData.cellId;
+            // Show warning if active cell exists and doesn't match the chart cell
+            setIsActiveCellMismatch(activeCellId !== undefined && activeCellId !== chartCellId);
+        };
+
+        // Initial check
+        checkActiveCell();
+
+        // Listen to active cell changes
+        chartData.notebookTracker.activeCellChanged.connect(checkActiveCell);
+
+        return () => {
+            chartData.notebookTracker.activeCellChanged.disconnect(checkActiveCell);
+        };
+    }, [chartData]);
+
+    // Update overlay height to cover full scrollable content
+    useEffect(() => {
+        if (!isAddingField) {
+            setOverlayHeight(0);
+            return;
+        }
+
+        const updateOverlayHeight = (): void => {
+            if (widgetRef.current) {
+                // Use scrollHeight to get the full scrollable content height
+                setOverlayHeight(widgetRef.current.scrollHeight);
+            }
+        };
+
+        // Initial update
+        updateOverlayHeight();
+
+        // Use ResizeObserver to watch for content size changes
+        let resizeObserver: ResizeObserver | null = null;
+        if (widgetRef.current && typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(() => {
+                updateOverlayHeight();
+            });
+            resizeObserver.observe(widgetRef.current);
+        }
+
+        // Fallback: Update on window resize
+        window.addEventListener('resize', updateOverlayHeight);
+
+        return () => {
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
+            window.removeEventListener('resize', updateOverlayHeight);
+        };
+    }, [isAddingField]);
+
+    // Use custom hook for chart config management
+    const { configVariables, setConfigVariables, hasConfig } = useChartConfig({
+        sourceCode: chartData?.sourceCode,
+        currentSourceCode,
+    });
+
+    // Use custom hook for debounced notebook updates
+    const { updateNotebookCell, scheduleUpdate, clearPendingUpdate } = useDebouncedNotebookUpdate({
+        chartData,
+        debounceDelay: 500,
+    });
+
+    /**
+     * Handles variable value changes with debounced notebook updates.
+     */
+    const handleVariableChange = useCallback(
+        (
+            variableName: string,
+            newValue: string | number | boolean | [number, number]
+        ): void => {
+            const codeToUse = currentSourceCode || chartData?.sourceCode;
+            if (!codeToUse) return;
+
+            // Update config variables state
+            const updated = configVariables.map((v) =>
+                v.name === variableName ? { ...v, value: newValue } : v
+            );
+            setConfigVariables(updated);
+
+            // Update the source code
+            const updatedCode = updateChartConfig(codeToUse, updated);
+            setCurrentSourceCode(updatedCode);
+
+            // Schedule debounced notebook update
+            scheduleUpdate(updatedCode);
+        },
+        [chartData?.sourceCode, currentSourceCode, configVariables, setConfigVariables, scheduleUpdate]
+    );
+
+    /**
+     * Handles chart conversion from matplotlib to Chart Wizard format.
+     */
+    const handleConvertChart = useCallback(async (): Promise<void> => {
+        void logEvent('chart_wizard_convert_chart');
+
+        if (!chartData?.sourceCode) {
+            console.error('No source code available');
+            return;
+        }
+
+        // Clear any pending debounced updates to prevent race conditions
+        clearPendingUpdate();
+
+        setIsConverting(true);
+        try {
+            const response = await convertChartCode(chartData.sourceCode);
+            if (response.converted_code) {
+                // Extract code from markdown code blocks if present
+                const extractedCode = removeMarkdownCodeFormatting(response.converted_code);
+                // Validate that extracted code is not empty to prevent deleting user's code
+                if (!extractedCode || extractedCode.trim().length === 0) {
+                    console.error('Error: Extracted code is empty. Cannot update notebook cell.');
+                    Notification.emit(
+                        'Chart conversion failed: The converted code is empty. Please try again or check your chart code.',
+                        'error',
+                        {
+                            autoClose: 5000
+                        }
+                    );
+                    return;
+                }
+                // Update current source code so the useEffect will parse it
+                setCurrentSourceCode(extractedCode);
+                // Update the cell with the converted code and re-execute
+                updateNotebookCell(extractedCode);
+            }
+        } catch (error) {
+            console.error('Error converting chart code:', error);
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+            Notification.emit(
+                `Chart conversion failed: ${errorMessage}. Please try again.`,
+                'error',
+                {
+                    autoClose: 5000
+                }
+            );
+        } finally {
+            setIsConverting(false);
+        }
+    }, [chartData?.sourceCode, clearPendingUpdate, updateNotebookCell]);
+
+    /**
+     * Handles when a new field is added via the AddFieldButton component.
+     */
+    const handleFieldAdded = useCallback((updatedCode: string): void => {
+        // Update current source code so the useEffect will parse it
+        setCurrentSourceCode(updatedCode);
+        // Update the cell with the updated code
+        updateNotebookCell(updatedCode);
+    }, [updateNotebookCell]);
+
+    /**
+     * Exports the chart image to disk via the chartExport utility; shows a notification on error.
+     */
+    const handleExportChart = useCallback(async (): Promise<void> => {
+        void logEvent('chart_wizard_export_clicked');
+        if (!chartData) return;
+
+        const result = await exportChartImage(chartData, exportFormat);
+        if (!result.success) {
+            Notification.emit(result.error, 'error', { autoClose: 5000 });
+        }
+    }, [chartData, exportFormat]);
+
+    /**
+     * Renders the appropriate input field component based on variable type.
+     */
+    const renderInputField = useCallback(
+        (variable: ChartConfigVariable): React.ReactElement => {
+            const label = formatVariableLabel(variable.name);
+
+            const commonProps = {
+                variable,
+                label,
+                onVariableChange: handleVariableChange,
+            };
+
+            switch (variable.type) {
+                case 'boolean':
+                    return <BooleanInputRow key={variable.name} {...commonProps} />;
+                case 'tuple':
+                    return <TupleInputRow key={variable.name} {...commonProps} />;
+                case 'number':
+                    return <NumberInputRow key={variable.name} {...commonProps} />;
+                case 'string': {
+                    // String input - check if it's a hex color
+                    const stringValue = variable.value as string;
+                    const isColor = isHexColor(stringValue);
+
+                    if (isColor) {
+                        return <ColorInputRow key={variable.name} {...commonProps} />;
+                    }
+                    return <StringInputRow key={variable.name} {...commonProps} />;
+                }
+                default:
+                    return <StringInputRow key={variable.name} {...commonProps} />;
+            }
+        },
+        [handleVariableChange]
+    );
+
+    // Memoize input fields to prevent unnecessary re-renders
+    const inputFields = useMemo(
+        () => configVariables.map(renderInputField),
+        [configVariables, renderInputField]
+    );
+
+    // Early return for empty state
+    if (!chartData) {
+        return (
+            <div className="chart-wizard-empty-state">
+                <h2>Chart Wizard</h2>
+                <p>Click the Chart Wizard button on a matplotlib chart to get started.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="chart-wizard-widget" ref={widgetRef} style={{ position: 'relative' }}>
+            <h2>Chart Wizard</h2>
+
+            {isActiveCellMismatch && (
+                <div className="chart-wizard-warning">
+                    <div className="chart-wizard-warning-content">
+                        The active cell is no longer the chart cell. Changes may not be applied correctly.
+                    </div>
+                    <button
+                        className="chart-wizard-warning-button"
+                        onClick={() => {
+                            if (chartData) {
+                                // Find the notebook panel by ID
+                                const notebookPanel = chartData.notebookTracker.find(
+                                    panel => panel.id === chartData.notebookPanelId
+                                );
+                                
+                                if (notebookPanel) {
+                                    // Activate the notebook panel if it's not the current one
+                                    if (chartData.notebookTracker.currentWidget?.id !== notebookPanel.id) {
+                                        chartData.app.shell.activateById(notebookPanel.id);
+                                        // Wait a bit for the notebook to activate before scrolling
+                                        setTimeout(() => {
+                                            scrollToCell(notebookPanel, chartData.cellId, undefined, 'start');
+                                        }, 100);
+                                    } else {
+                                        // Navigate to and scroll to the chart cell
+                                        scrollToCell(notebookPanel, chartData.cellId, undefined, 'start');
+                                    }
+                                }
+                            }
+                        }}
+                        type="button"
+                    >
+                        Go to Chart Cell
+                    </button>
+                </div>
+            )}
+
+            {hasConfig ? (
+                <div className="chart-wizard-config-container">
+                    <p className="chart-wizard-config-description">
+                        Edit values below to customize your chart. Changes will be reflected in the notebook.
+                    </p>
+                    {inputFields}
+                    <AddFieldButton
+                        code={currentSourceCode || chartData?.sourceCode || null}
+                        onFieldAdded={handleFieldAdded}
+                        clearPendingUpdate={clearPendingUpdate}
+                        onLoadingStateChange={setIsAddingField}
+                    />
+                    <div className="chart-wizard-export-section">
+                        <h3 className="chart-wizard-section-heading">Export</h3>
+                        <div className="chart-wizard-export-format-row">
+                            <ToggleButton
+                                leftText="PNG"
+                                rightText="JPG"
+                                isLeftSelected={exportFormat === 'png'}
+                                onChange={(isPng) => setExportFormat(isPng ? 'png' : 'jpeg')}
+                            />
+                        </div>
+                        <button
+                            className="button-base button-purple add-field-button"
+                            type="button"
+                            title="Save chart image to file"
+                            onClick={handleExportChart}
+                        >
+                            Export image
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="chart-wizard-no-config">
+                    <p>
+                        <strong>This chart isn&apos;t ready for Chart Wizard yet.</strong>
+                        <br />
+                        Run the converter below or let Mito AI handle it automatically.
+                    </p>
+                    <button
+                        className="button-base button-purple"
+                        disabled={isConverting}
+                        onClick={handleConvertChart}
+                        type="button"
+                    >
+                        {isConverting ? (
+                            <>
+                                Converting{' '}
+                                <span className="chart-wizard-loading-dots">
+                                    <LoadingDots />
+                                </span>
+                            </>
+                        ) : (
+                            'Convert'
+                        )}
+                    </button>
+                </div>
+            )}
+
+            {isAddingField && (
+                <div 
+                    className="chart-wizard-overlay"
+                    style={{ height: overlayHeight > 0 ? `${overlayHeight}px` : '100%' }}
+                >
+                    <div className="chart-wizard-overlay-text">
+                        Adding new field{' '}
+                        <span className="chart-wizard-loading-dots">
+                            <LoadingDots />
+                        </span>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export class ChartWizardWidget extends ReactWidget {
+    private chartData: ChartWizardData | null = null;
+
+    constructor() {
+        super();
+        this.addClass('chart-wizard-widget');
+    }
+
+    updateChartData(chartData: ChartWizardData): void {
+        this.chartData = chartData;
+        this.update();
+    }
+
+    render(): React.ReactElement {
+        return <ChartWizardContent chartData={this.chartData} />;
+    }
+}

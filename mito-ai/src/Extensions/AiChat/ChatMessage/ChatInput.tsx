@@ -1,0 +1,862 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import { ReadonlyPartialJSONObject } from '@lumino/coreutils';
+import { classNames } from '../../../utils/classNames';
+import { IContextManager } from '../../ContextManager/ContextManagerPlugin';
+import ChatDropdown from './ChatDropdown';
+import { Variable } from '../../ContextManager/VariableInspector';
+import { getActiveCellID, getActiveCellCode } from '../../../utils/notebook';
+import { INotebookTracker } from '@jupyterlab/notebook';
+import { convertCellReferencesToStableFormat } from '../../../utils/cellReferences';
+import '../../../../style/ChatInput.css';
+import '../../../../style/ChatDropdown.css';
+import { useDebouncedFunction } from '../../../hooks/useDebouncedFunction';
+import { useCellOrder } from '../../../hooks/useCellOrder';
+import { useLineSelection } from '../../../hooks/useLineSelection';
+import { ChatDropdownOption } from './ChatDropdown';
+import SelectedContextContainer from '../../../components/SelectedContextContainer';
+import AttachFileButton from '../../../components/AttachFileButton';
+import DatabaseButton from '../../../components/DatabaseButton';
+import { JupyterFrontEnd } from '@jupyterlab/application';
+import { AgentExecutionStatus } from '../ChatTaskpane';
+import { uploadFileToBackend } from '../../../utils/fileUpload';
+import {
+    COMMAND_MITO_AI_ADD_DATAFRAME_VIEWER_SELECTION,
+    COMMAND_MITO_AI_ADD_CODE_COMMENT,
+    COMMAND_MITO_AI_ADD_OUTPUT_COMMENT,
+    COMMAND_MITO_AI_OPEN_CHAT,
+    COMMAND_MITO_AI_UPDATE_COMMENT_INDICATORS,
+    COMMAND_MITO_AI_REMOVE_CODE_COMMENT,
+    COMMAND_MITO_AI_REMOVE_OUTPUT_COMMENT,
+} from '../../../commands';
+
+interface ChatInputProps {
+    app: JupyterFrontEnd;
+    initialContent: string;
+    handleSubmitUserMessage: (newContent: string, messageIndex?: number,  additionalContext?: ContextItemAIOptimized[]) => void;
+    onCancel?: () => void;
+    isEditing: boolean;
+    contextManager?: IContextManager;
+    notebookTracker: INotebookTracker;
+    agentModeEnabled: boolean;
+    agentExecutionStatus?: AgentExecutionStatus;
+    operatingSystem?: string;
+    displayOptimizedChatHistoryLength?: number;
+    agentTargetNotebookPanelRef?: React.RefObject<any>;
+    isSignedUp?: boolean;
+    /** When false, user cannot send messages (e.g. GitHub Copilot not signed in). */
+    canSendMessages?: boolean;
+    messageIndex?: number;
+    /** Border glow on the input shell when external context is added (e.g. DataFrame viewer). */
+    attentionGlowActive?: boolean;
+    onAttentionGlowAnimationEnd?: () => void;
+    /** Fired when DataFrame viewer selection is added via the Jupyter command (for attention glow, etc.). */
+    onDataframeViewerContextAdded?: () => void;
+}
+
+export interface ExpandedVariable extends Variable {
+    parent_df?: string;
+    file_name?: string;
+}
+
+interface ContextItemDisplayOptimized {
+    type: string;
+    value: string;
+    // For databases, we want to show a display name like: "snowflake"
+    // But we need to send the AI the full connection string like: "e01f355d-9d31-4957-acb7-6c2a7a4d6e50 - snowflake"
+    // so that if there are multiple connections with the same , the AI can still identify the correct connection.
+    display?: string;
+}
+
+export interface ContextItemAIOptimized {
+    type: string;
+    value: string;
+}
+
+const ChatInput: React.FC<ChatInputProps> = ({
+    app,
+    initialContent,
+    handleSubmitUserMessage,
+    onCancel,
+    isEditing,
+    contextManager,
+    notebookTracker,
+    agentModeEnabled = false,
+    agentExecutionStatus = 'idle',
+    operatingSystem = 'mac',
+    displayOptimizedChatHistoryLength = 0,
+    agentTargetNotebookPanelRef,
+    isSignedUp = true,
+    canSendMessages = true,
+    messageIndex,
+    attentionGlowActive = false,
+    onAttentionGlowAnimationEnd,
+    onDataframeViewerContextAdded,
+}) => {
+    const [input, setInput] = useState(initialContent);
+    const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
+    const [activeCellID, setActiveCellID] = useState<string | undefined>(getActiveCellID(notebookTracker));
+    const activeCellCode = getActiveCellCode(notebookTracker) || '';
+    const [isDropdownVisible, setDropdownVisible] = useState(false);
+    const [dropdownFilter, setDropdownFilter] = useState('');
+    const [additionalContext, setAdditionalContext] = useState<ContextItemDisplayOptimized[]>([]);
+    const [isDropdownFromButton, setIsDropdownFromButton] = useState(false);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+
+    // Track cell order and line selection
+    const cellOrder = useCellOrder(notebookTracker);
+    const lineSelection = useLineSelection(notebookTracker, cellOrder);
+
+    const onDataframeViewerContextAddedRef = useRef(onDataframeViewerContextAdded);
+    onDataframeViewerContextAddedRef.current = onDataframeViewerContextAdded;
+
+    useEffect(() => {
+        // Only the main composer registers this command. An editing ChatInput can mount
+        // alongside it; we must not overwrite the command with the edit box's state setter.
+        if (isEditing) {
+            return;
+        }
+        app.commands.addCommand(COMMAND_MITO_AI_ADD_DATAFRAME_VIEWER_SELECTION, {
+            label: 'Add DataFrame viewer selection to Mito AI context',
+            execute: (args?: ReadonlyPartialJSONObject) => {
+                if (
+                    !args ||
+                    typeof args.value !== 'string' ||
+                    typeof args.display !== 'string'
+                ) {
+                    return;
+                }
+                setAdditionalContext((prev) => [
+                    ...prev,
+                    {
+                        type: 'dataframe_viewer_selection',
+                        value: args.value as string,
+                        display: args.display as string,
+                    },
+                ]);
+                void app.commands.execute(COMMAND_MITO_AI_OPEN_CHAT, {
+                    focusChatInput: true,
+                });
+                onDataframeViewerContextAddedRef.current?.();
+            },
+        });
+
+        app.commands.addCommand(COMMAND_MITO_AI_ADD_CODE_COMMENT, {
+            label: 'Add code comment to Mito AI context',
+            execute: (args?: ReadonlyPartialJSONObject) => {
+                if (
+                    !args ||
+                    typeof args.value !== 'string' ||
+                    typeof args.display !== 'string'
+                ) {
+                    return;
+                }
+                const newValue = args.value as string;
+                let parsed: {
+                    cellId?: string;
+                    startLine?: number;
+                    endLine?: number;
+                } | undefined;
+                try {
+                    parsed = JSON.parse(newValue);
+                } catch {
+                    parsed = undefined;
+                }
+                setAdditionalContext((prev) => {
+                    // Replace existing comment on the same cell+lines
+                    const filtered = prev.filter(item => {
+                        if (item.type !== 'code_comment') { return true; }
+                        if (!parsed) { return true; }
+                        try {
+                            const existing = JSON.parse(item.value);
+                            return !(existing.cellId === parsed.cellId
+                                && existing.startLine === parsed.startLine
+                                && existing.endLine === parsed.endLine);
+                        } catch { return true; }
+                    });
+                    return [...filtered, {
+                        type: 'code_comment',
+                        value: newValue,
+                        display: args.display as string,
+                    }];
+                });
+                setInput((prev) => prev.trim() === '' ? 'Please address these comments' : prev);
+                void app.commands.execute(COMMAND_MITO_AI_OPEN_CHAT, {
+                    focusChatInput: true,
+                });
+                onDataframeViewerContextAddedRef.current?.();
+            },
+        });
+
+        app.commands.addCommand(COMMAND_MITO_AI_ADD_OUTPUT_COMMENT, {
+            label: 'Add output comment to Mito AI context',
+            execute: (args?: ReadonlyPartialJSONObject) => {
+                if (
+                    !args ||
+                    typeof args.value !== 'string' ||
+                    typeof args.display !== 'string'
+                ) {
+                    return;
+                }
+                const newValue = args.value as string;
+                let parsed: {
+                    cellId?: string;
+                } | undefined;
+                try {
+                    parsed = JSON.parse(newValue);
+                } catch {
+                    parsed = undefined;
+                }
+                setAdditionalContext((prev) => {
+                    // Replace existing comment on the same cell output
+                    const filtered = prev.filter(item => {
+                        if (item.type !== 'output_comment') { return true; }
+                        if (!parsed) { return true; }
+                        try {
+                            const existing = JSON.parse(item.value);
+                            return existing.cellId !== parsed.cellId;
+                        } catch { return true; }
+                    });
+                    return [...filtered, {
+                        type: 'output_comment',
+                        value: newValue,
+                        display: args.display as string,
+                    }];
+                });
+                setInput((prev) => prev.trim() === '' ? 'Please address these comments' : prev);
+                void app.commands.execute(COMMAND_MITO_AI_OPEN_CHAT, {
+                    focusChatInput: true,
+                });
+                onDataframeViewerContextAddedRef.current?.();
+            },
+        });
+
+        app.commands.addCommand(COMMAND_MITO_AI_REMOVE_CODE_COMMENT, {
+            label: 'Remove code comment from Mito AI context',
+            execute: (args?: ReadonlyPartialJSONObject) => {
+                if (!args || typeof args.cellId !== 'string') { return; }
+                const cellId = args.cellId as string;
+                const startLine = args.startLine as number;
+                const endLine = args.endLine as number;
+                setAdditionalContext((prev) => prev.filter(item => {
+                    if (item.type !== 'code_comment') { return true; }
+                    try {
+                        const existing = JSON.parse(item.value);
+                        return !(existing.cellId === cellId
+                            && existing.startLine === startLine
+                            && existing.endLine === endLine);
+                    } catch { return true; }
+                }));
+            },
+        });
+
+        app.commands.addCommand(COMMAND_MITO_AI_REMOVE_OUTPUT_COMMENT, {
+            label: 'Remove output comment from Mito AI context',
+            execute: (args?: ReadonlyPartialJSONObject) => {
+                if (!args || typeof args.cellId !== 'string') { return; }
+                const cellId = args.cellId as string;
+                setAdditionalContext((prev) => prev.filter(item => {
+                    if (item.type !== 'output_comment') { return true; }
+                    try {
+                        const existing = JSON.parse(item.value);
+                        return existing.cellId !== cellId;
+                    } catch { return true; }
+                }));
+            },
+        });
+    }, [app, isEditing]);
+
+    // Dispatch indicator updates whenever comment context changes
+    useEffect(() => {
+        if (isEditing) {
+            return;
+        }
+        const commentContext = additionalContext.filter(
+            c => c.type === 'code_comment' || c.type === 'output_comment'
+        );
+        void app.commands.execute(COMMAND_MITO_AI_UPDATE_COMMENT_INDICATORS, {
+            comments: commentContext.map(c => ({ type: c.type, value: c.value })),
+        });
+    }, [additionalContext, app, isEditing]);
+
+    const handleFileUpload = (file: File): void => {
+        let uploadType: string;
+
+        if (file.type.startsWith('image/')) {
+            // If the file is an image, we want to preserve the file type.
+            // The type is used to display the image icon in the SelectedContextContainer,
+            // and is used to encode the image on the backend.
+            uploadType = file.type;
+        } else {
+            uploadType = 'file';
+        }
+
+        // Add the uploaded file to the additional context
+        setAdditionalContext(prev => [
+            ...prev, {
+                type: uploadType,
+                value: file.name,
+                display: file.name
+            }
+        ]);
+    };
+
+    // Drag and drop handlers
+    const handleDragOver = (e: React.DragEvent): void => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only show drag over state if not currently uploading
+        if (!isUploading) {
+            setIsDragOver(true);
+        }
+    };
+
+    const handleDragLeave = (e: React.DragEvent): void => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+    };
+
+    const handleDrop = async (e: React.DragEvent): Promise<void> => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0 && !isUploading) {
+            setIsUploading(true);
+            try {
+                // Upload all files to backend using the shared utility
+                const uploadPromises = Array.from(files).map(file =>
+                    uploadFileToBackend(file, notebookTracker, handleFileUpload)
+                );
+                // Use allSettled so we wait for all uploads to finish (success or failure)
+                // before clearing the uploading state. This avoids background uploads
+                // mutating state after isUploading becomes false.
+                await Promise.allSettled(uploadPromises);
+            } finally {
+                setIsUploading(false);
+            }
+        }
+    };
+
+    const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>): Promise<void> => {
+        const items = e.clipboardData.items;
+        const clipboardItem = items?.[items.length - 1];
+        if (!clipboardItem) return;
+
+        // Check if it's a file (images are also files)
+        if (clipboardItem.kind === 'file') {
+            e.preventDefault();
+            
+            const blob = clipboardItem.getAsFile();
+            if (!blob) return;
+
+            // Determine file name - use blob name if available, otherwise generate one
+            let fileName = blob.name;
+            if (!fileName) {
+                // Generate a filename based on the MIME type
+                const extension = clipboardItem.type.startsWith('image/') 
+                    ? clipboardItem.type.split('/')[1] 
+                    : 'file';
+                fileName = `pasted-${Date.now()}.${extension}`;
+            }
+
+            const file = new File(
+                [blob], 
+                fileName, 
+                { type: clipboardItem.type }
+            );
+            
+            if (isUploading) return; // Prevent multiple simultaneous uploads
+            
+            setIsUploading(true);
+            try {
+                await uploadFileToBackend(file, notebookTracker, handleFileUpload);
+            } finally {
+                setIsUploading(false);
+            }
+        }
+    };
+
+    // Debounce the active cell ID change to avoid multiple rerenders. 
+    // We use this to avoid a flickering screen when the active cell changes. 
+    const debouncedSetActiveCellID = useDebouncedFunction((newID: string | undefined) => {
+        setActiveCellID(newID);
+    }, 100);
+
+    useEffect(() => {
+        const activeCellChangedListener = (): void => {
+            const newActiveCellID = getActiveCellID(notebookTracker);
+            debouncedSetActiveCellID(newActiveCellID);
+        };
+
+        // Connect the listener once when the component mounts
+        notebookTracker.activeCellChanged.connect(activeCellChangedListener);
+
+        // Cleanup: disconnect the listener when the component unmounts
+        return () => {
+            notebookTracker.activeCellChanged.disconnect(activeCellChangedListener);
+        };
+
+    }, [notebookTracker, activeCellID, debouncedSetActiveCellID]);
+
+    // TextAreas cannot automatically adjust their height based on the content that they contain, 
+    // so instead we re-adjust the height as the content changes here. 
+    const adjustHeight = (resetHeight: boolean = false): void => {
+        const textarea = textAreaRef?.current;
+        if (!textarea) return;
+
+        textarea.style.minHeight = 'auto';
+        const maxHeight = 350;
+        textarea.style.height = !textarea.value || resetHeight
+            ? '80px'
+            : `${Math.min(maxHeight, Math.max(80, textarea.scrollHeight))}px`;
+    };
+
+    useEffect(() => {
+        adjustHeight();
+    }, [textAreaRef?.current?.value]);
+
+    const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+        const value = event.target.value;
+        setInput(value);
+
+        const cursorPosition = event.target.selectionStart;
+        const textBeforeCursor = value.slice(0, cursorPosition);
+        const words = textBeforeCursor.split(/\s+/);
+        const currentWord = words[words.length - 1];
+
+        if (currentWord && currentWord.startsWith("@")) {
+            const query = currentWord.slice(1);
+            setDropdownFilter(query);
+            setDropdownVisible(true);
+            setIsDropdownFromButton(false);
+        } else {
+            setDropdownVisible(false);
+            setDropdownFilter('');
+            setIsDropdownFromButton(false);
+        }
+    };
+
+    const handleOptionSelect = (option: ChatDropdownOption): void => {
+        if (isDropdownFromButton) {
+            // When triggered by "Add Context" button, add to SelectedContextContainer
+            if (option.type === 'variable') {
+                // For variables, we'll add them as a special context type
+                const contextName = option.variable.parent_df
+                    ? `${option.variable.parent_df}.${option.variable.variable_name}`
+                    : option.variable.variable_name;
+                setAdditionalContext(prev => [...prev, { type: 'variable', value: contextName }]);
+            } else if (option.type === 'file') {
+                setAdditionalContext(prev => [...prev, { type: 'file', value: option.file.variable_name }]);
+            } else if (option.type === 'rule') {
+                setAdditionalContext(prev => [...prev, { type: 'rule', value: option.rule }]);
+            } else if (option.type === 'db') {
+                setAdditionalContext(prev => [
+                    ...prev,
+                    {
+                        type: 'db',
+                        value: option.variable.value,
+                        display: option.variable.variable_name
+                    }
+                ]);
+            } else if (option.type === 'cell') {
+                setAdditionalContext(prev => [
+                    ...prev,
+                    {
+                        type: 'cell',
+                        value: option.cellId,
+                        display: `Cell ${option.cellNumber}`
+                    }
+                ]);
+            }
+            setDropdownVisible(false);
+
+            // Use setTimeout to ensure this happens after React's state update cycle
+            setTimeout(() => {
+                textAreaRef.current?.focus();
+            }, 0);
+            return;
+        }
+
+        // Original behavior for @ dropdown - add to text input
+        const textarea = textAreaRef.current;
+        if (!textarea) return;
+
+        const cursorPosition = textarea.selectionStart;
+        const textBeforeCursor = input.slice(0, cursorPosition);
+        const atIndex = textBeforeCursor.lastIndexOf("@");
+        const textAfterCursor = input.slice(cursorPosition);
+
+        let contextChatRepresentation: string = ''
+
+        if (option.type === 'variable') {
+
+            if (option.variable.parent_df) {
+                contextChatRepresentation = `\`${option.variable.variable_name}\``
+            } else {
+                contextChatRepresentation = `\`${option.variable.variable_name}\``
+            }
+        } else if (option.type === 'file') {
+            // For files, add them as both back-ticked elements and the additional context container
+            contextChatRepresentation = `\`${option.file.variable_name}\``
+            setAdditionalContext([...additionalContext, { type: 'file', value: option.file.variable_name }]);
+        } else if (option.type === 'rule') {
+            // We don't add the rule as an back ticked element in the chat input, 
+            // and instead just add it as plain text because we also add it as 
+            // a context container above the chat input and we want the user to 
+            // delete the context from there if they want to. 
+            contextChatRepresentation = option.rule
+            setAdditionalContext([...additionalContext, { type: 'rule', value: option.rule }]);
+        } else if (option.type === 'db') {
+            // For databases, add them as back-ticked elements
+            contextChatRepresentation = `\`${option.variable.variable_name}\``
+            setAdditionalContext([
+                ...additionalContext,
+                { type: 'db', value: option.variable.value, display: option.variable.variable_name }
+            ]);
+        } else if (option.type === 'cell') {
+            // For cells, add them as @CellN mentions (no space for easier filtering)
+            contextChatRepresentation = `@Cell${option.cellNumber}`
+            // Store the stable cell ID in additionalContext, not the @CellN format
+            setAdditionalContext([
+                ...additionalContext,
+                { type: 'cell', value: option.cellId, display: `Cell ${option.cellNumber}` }
+            ]);
+        }
+
+        // Add a space after the selected item so user can continue typing
+        const contextChatRepresentationWithSpace = contextChatRepresentation + ' ';
+
+        const newValue =
+            input.slice(0, atIndex) +
+            contextChatRepresentationWithSpace +
+            textAfterCursor;
+        setInput(newValue);
+
+        setDropdownVisible(false);
+
+        // After updating the input value, set the cursor position after the inserted item and space
+        // We use setTimeout to ensure this happens after React's state update
+        setTimeout(() => {
+            if (textarea) {
+                const newCursorPosition = atIndex + contextChatRepresentationWithSpace.length;
+                textarea.focus();
+                textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+            }
+        }, 0);
+    };
+
+    const handleDropdownClose = (): void => {
+        setDropdownVisible(false);
+        setDropdownFilter('');
+        setIsDropdownFromButton(false);
+    };
+
+    const getAdditionContextWithoutDisplayNames = (): ContextItemAIOptimized[] => {
+        return additionalContext.map(contextItem => ({
+            type: contextItem.type,
+            value: contextItem.value
+        }));
+    };
+
+    // Convert @Cell N references to [MITO_CELL_REF:cell_id] format before submitting
+    const processMessageForSubmission = (messageText: string): string => {
+        return convertCellReferencesToStableFormat(messageText, notebookTracker.currentWidget);
+    };
+
+    const getExpandedVarialbes = (): ExpandedVariable[] => {
+        const activeNotebookContext = contextManager?.getActiveNotebookContext();
+        const expandedVariables: ExpandedVariable[] = [
+            // Add base variables (excluding DataFrames)
+            ...(activeNotebookContext?.variables.filter(variable => variable.type !== "pd.DataFrame") || []),
+            // Add DataFrames
+            ...(activeNotebookContext?.variables.filter((variable) => variable.type === "pd.DataFrame") || []),
+            // Add series with parent DataFrame references
+            ...(activeNotebookContext?.variables
+                .filter((variable) => variable.type === "pd.DataFrame")
+                .flatMap((df) =>
+                    Object.entries(df.value).map(([seriesName, _]) => ({
+                        variable_name: seriesName,
+                        type: "col",
+                        value: "replace_me",
+                        parent_df: df.variable_name,
+                    }))
+                ) || []),
+            // Add files
+            ...(activeNotebookContext?.files.map(file => ({
+                variable_name: file.file_name,
+                type: file.file_name.split('.').pop()?.toLowerCase() || '',
+                value: file.file_name,
+                file_name: file.file_name
+            })) || [])
+        ];
+        return expandedVariables;
+    }
+
+    const getPlaceholderText = (): string => {
+        if (!canSendMessages) {
+            return 'Sign in with GitHub above to use Mito AI';
+        }
+        if (!isSignedUp && displayOptimizedChatHistoryLength === 0) {
+            return 'Sign up above to use Mito AI';
+        } else if (agentExecutionStatus === 'working') {
+            return `Agent is editing ${agentTargetNotebookPanelRef?.current?.context.path.split('/').pop()}`;
+        } else if (agentExecutionStatus === 'stopping') {
+            return 'Agent is stopping...';
+        } else if (agentModeEnabled) {
+            return 'Ask agent to do anything';
+        } else if (isEditing) {
+            return 'Edit your message';
+        } else if (displayOptimizedChatHistoryLength < 2) {
+            return `Ask question (${operatingSystem === 'mac' ? '⌘' : 'Ctrl'}E), @ to mention`;
+        } else {
+            return `Ask followup (${operatingSystem === 'mac' ? '⌘' : 'Ctrl'}E), @ to mention`;
+        }
+    };
+
+    // Automatically add context items based on mode
+    useEffect(() => {
+        if (!agentModeEnabled) {
+            // Chat mode: include both active cell and notebook context
+            const hasActiveCellContext = additionalContext.some(context => context.type === 'active_cell');
+            const hasNotebookContext = additionalContext.some(context => context.type === 'notebook');
+
+            if (!hasActiveCellContext || !hasNotebookContext) {
+                setAdditionalContext(prev => {
+                    const updated = [...prev];
+                    if (!hasActiveCellContext) {
+                        updated.push({
+                            type: 'active_cell',
+                            value: 'Active Cell',
+                            display: 'Active Cell'
+                        });
+                    }
+                    if (!hasNotebookContext) {
+                        updated.push({
+                            type: 'notebook',
+                            value: 'Notebook',
+                            display: 'Notebook'
+                        });
+                    }
+                    return updated;
+                });
+            }
+        } else if (agentModeEnabled) {
+            // Remove active cell context when in agent mode
+            const hasActiveCellContext = additionalContext.some(context => context.type === 'active_cell');
+            if (hasActiveCellContext) {
+                setAdditionalContext(prev => prev.filter(context => context.type !== 'active_cell'));
+            }
+
+            const hasNotebookContext = additionalContext.some(context => context.type === 'notebook');
+            if (!hasNotebookContext) {
+            // Add a current notebook context item
+                setAdditionalContext(prev => [...prev, {
+                    type: 'notebook',
+                    value: 'Notebook',
+                    display: 'Notebook'
+                }]);
+            }
+        }
+    }, [agentModeEnabled, additionalContext, activeCellCode]);
+
+    // Manage line selection context - shows selected lines when user has text selected in a code cell
+    useEffect(() => {
+        const LINE_SELECTION_TYPE = 'line_selection';
+
+        // Build the new value data for comparison (lines are 0-indexed internally)
+        const newValueData = lineSelection.hasSelection
+            ? JSON.stringify({
+                cellId: lineSelection.cellId,
+                startLine: lineSelection.startLine,
+                endLine: lineSelection.endLine,
+                selectedCode: lineSelection.selectedCode
+            })
+            : null;
+
+        // Treat null and undefined as the same "no selection" state
+        const normalizedNewValue = newValueData ?? null;
+
+        setAdditionalContext(prev => {
+            // Find existing line selection context in the latest state (avoid stale render closures)
+            const existingContext = prev.find(context => context.type === LINE_SELECTION_TYPE);
+            const normalizedExistingValue = existingContext?.value ?? null;
+
+            // Only update if the selection has changed (null and undefined are equivalent)
+            if (normalizedNewValue === normalizedExistingValue) {
+                return prev;
+            }
+
+            // Remove old line selection context if it exists
+            let additionalContextCopy = prev.filter(context => context.type !== LINE_SELECTION_TYPE);
+
+            // Add new line selection context if there is text selected
+            if (normalizedNewValue) {
+                // Build display text with 1-indexed lines for user display
+                const displayStartLine = lineSelection.startLine + 1;
+                const displayEndLine = lineSelection.endLine + 1;
+                const displayText = displayStartLine === displayEndLine
+                    ? `Cell ${lineSelection.cellNumber} line ${displayStartLine}`
+                    : `Cell ${lineSelection.cellNumber} line ${displayStartLine}-${displayEndLine}`;
+
+                additionalContextCopy = [
+                    ...additionalContextCopy,
+                    {
+                        type: LINE_SELECTION_TYPE,
+                        value: normalizedNewValue,
+                        display: displayText
+                    }
+                ];
+            }
+
+            return additionalContextCopy;
+        });
+    }, [lineSelection]);
+
+    return (
+        <div
+            className={classNames('chat-input-container', {
+                editing: isEditing,
+                'drag-over': isDragOver,
+                'chat-input-container--attention-glow': attentionGlowActive,
+            })}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onAnimationEnd={(e) => {
+                if (
+                    e.target === e.currentTarget &&
+                    e.animationName.includes('mito-ai-chat-input-attention-glow')
+                ) {
+                    onAttentionGlowAnimationEnd?.();
+                }
+            }}
+        >
+            <div
+                className='context-container'
+                style={!canSendMessages ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
+            >
+                <DatabaseButton app={app} />
+                <AttachFileButton onFileUploaded={handleFileUpload} notebookTracker={notebookTracker} />
+                <button
+                    type="button"
+                    className="context-button"
+                    disabled={!canSendMessages}
+                    onClick={() => {
+                        setDropdownVisible(true);
+                        setDropdownFilter('');
+                        setIsDropdownFromButton(true);
+                        textAreaRef.current?.focus();
+                    }}
+                >
+                    ＠ Add Context
+                </button>
+                {additionalContext.map((context, index) => (
+                    <SelectedContextContainer
+                        key={`${context.type}-${context.value}-${index}`}
+                        title={context.display || context.value}
+                        type={context.type}
+                        onRemove={() => setAdditionalContext(additionalContext.filter((_, i) => i !== index))}
+                        notebookTracker={notebookTracker}
+                        activeCellID={activeCellID}
+                        value={context.value}
+                    />
+                ))}
+            </div>
+
+            {/* 
+                Create a relative container for the text area and the dropdown so that when we 
+                render the dropdown, it is relative to the text area instead of the entire 
+                div. We do this so that the dropdown sits on top of (ie: covering) the code 
+                preview instead of sitting higher up the taskpane.
+            */}
+            <div className='chat-input-text-area-container'>
+                <textarea
+                    ref={textAreaRef}
+                    className={classNames("message", "message-user", 'chat-input', { "agent-mode": agentModeEnabled })}
+                    placeholder={getPlaceholderText()}
+                    value={input}
+                    disabled={
+                        !canSendMessages ||
+                        agentExecutionStatus === 'working' ||
+                        agentExecutionStatus === 'stopping'
+                    }
+                    onChange={handleInputChange}
+                    onPaste={handlePaste}
+                    onKeyDown={(e) => {
+                        // If dropdown is visible, only handle escape to close it
+                        if (isDropdownVisible) {
+                            if (e.key === 'Escape') {
+                                e.preventDefault();
+                                setDropdownVisible(false);
+                            }
+                            return;
+                        }
+
+                        // Enter key sends the message, but we still want to allow 
+                        // shift + enter to add a new line.
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            if (!canSendMessages) {
+                                return;
+                            }
+                            adjustHeight(true)
+                            const processedMessage = processMessageForSubmission(input);
+                            const additionalContextWithoutDisplayNames = getAdditionContextWithoutDisplayNames();
+                            handleSubmitUserMessage(processedMessage, messageIndex, additionalContextWithoutDisplayNames);
+
+                            // Reset
+                            setInput('')
+                            setAdditionalContext([])
+                        }
+                        // Escape key cancels editing
+                        if (e.key === 'Escape') {
+                            e.preventDefault();
+                            if (onCancel) {
+                                onCancel();
+                            }
+                        }
+                    }}
+                />
+                {isDropdownVisible && (
+                    <ChatDropdown
+                        options={getExpandedVarialbes()}
+                        onSelect={handleOptionSelect}
+                        filterText={dropdownFilter}
+                        isDropdownFromButton={isDropdownFromButton}
+                        onFilterChange={setDropdownFilter}
+                        onClose={handleDropdownClose}
+                        notebookTracker={notebookTracker}
+                    />
+                )}
+            </div>
+
+            {isEditing &&
+                <div className="message-edit-buttons">
+                    <button
+                        type="button"
+                        disabled={!canSendMessages}
+                        onClick={() => {
+                            if (!canSendMessages) {
+                                return;
+                            }
+                            const processedMessage = processMessageForSubmission(input);
+                            const additionalContextWithoutDisplayNames = getAdditionContextWithoutDisplayNames();
+                            handleSubmitUserMessage(processedMessage, messageIndex, additionalContextWithoutDisplayNames);
+                        }}
+                    >Save</button>
+                    <button onClick={onCancel}>Cancel</button>
+                </div>
+            }
+        </div>
+    )
+};
+
+export default ChatInput;

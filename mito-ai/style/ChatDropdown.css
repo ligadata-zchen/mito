@@ -1,0 +1,116 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.chat-dropdown {
+  /* Position the dropdown in the right place*/
+  position: absolute;
+  z-index: 9999;
+  bottom: 100%;
+  margin-bottom: 5px;
+
+  /* Style the dropdown */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 5px;
+}
+
+.chat-dropdown-list {
+  position: relative;
+  border: 0px;
+  border-radius: 5px;
+  background-color: var(--jp-layout-color1);
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  max-height: 350px;
+}
+
+.chat-dropdown-item {
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--jp-content-font-color1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-dropdown-item:hover,
+.chat-dropdown-item.selected {
+  background-color: var(--jp-layout-color3);
+}
+
+.chat-dropdown-item-type {
+  color: var(--jp-brand-color1);
+  font-family: var(--jp-code-font-family);
+  min-width: 35px;
+  width: 35px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-dropdown-item-name {
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-dropdown-item-parent-df {
+  color: var(--muted-text-color);
+  font-size: 12px;
+  margin-left: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-item-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dropdown-item-disabled:hover {
+  background-color: inherit;
+}
+
+.chat-dropdown-search {
+  padding: 8px;
+  background-color: var(--jp-layout-color1);
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+.chat-dropdown-search-input {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: var(--jp-ui-font-family);
+  background-color: var(--jp-layout-color1);
+  color: var(--jp-content-font-color1);
+  outline: none;
+  border: none;
+  box-sizing: border-box;
+}
+
+.chat-dropdown-search-input:focus {
+  outline: none;
+  border: none;
+}
+
+.chat-dropdown-search-input::placeholder {
+  color: var(--jp-content-font-color3);
+}

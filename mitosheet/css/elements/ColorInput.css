@@ -1,0 +1,47 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.color-input {
+    --color-input-width: 60px;
+
+    position: relative;
+    display: inline-block;
+    width: var(--color-input-width);
+
+    /* 
+        Different browsers render this element a bit differently. We choose
+        this height as some browsers put a box around the input, which is fine.
+    */
+    height: 23px;
+    border: 1px solid var(--mito-text-light)
+}
+
+/* 
+    NOTE: we don't style the color input hover as it looks fine, and appears to be finicky
+    to mess with in a cross browser way
+*/
+.mito-color-input-with-icon-container:hover {
+    background-color: var(--mito-text-light);
+}
+
+input.color-input-with-icon[type="color"] {
+    padding: 0;
+    height: 7px;
+    width: 35px;
+    border: 1px transparent;
+  }
+  
+input.color-input-with-icon[type="color"]::-moz-color-swatch {
+    border: none;
+}
+
+input.color-input-with-icon[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: none;
+}
+
+input.color-input-with-icon[type="color"]::-webkit-color-swatch {
+    border: none;
+}

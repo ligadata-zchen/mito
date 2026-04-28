@@ -1,0 +1,26 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.step-takspane-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.step-taskpane-step-container {
+    display: flex;
+    flex-direction: row;
+    height: 50px;
+    overflow-x: hidden;
+}
+
+.step-taskpane-step-icon {
+    min-width: 30px;
+    margin-top: 6px;
+    text-align: center;
+}
+
+.step-taskpane-missing-icon {
+    font-weight: bold;
+}

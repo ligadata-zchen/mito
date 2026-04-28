@@ -1,0 +1,14 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.icon {
+    margin-bottom: 2rem;
+}
+
+@media only screen and (min-width: 50em) {
+    .gradient_card h1 {
+        font-size: 2.5rem;
+    }
+}

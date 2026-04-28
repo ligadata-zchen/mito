@@ -1,0 +1,119 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.container {
+    /* Add padding to the top so that the page is not cut off by the navbar */
+    padding: 6rem 2rem;
+}
+  
+.main {
+    min-height: 100vh;
+    padding: 3rem 0rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.main_left_align {
+    align-items: flex-start;
+}
+
+.background_card {
+    background-color: var(--color-light-background);
+}
+
+.gradient_card {
+    background: var(--color-gradient-card);
+}
+
+.gradient_card, 
+.background_card {
+    padding: 4rem 2rem;
+    border-radius: 2rem;
+    width: 100%;
+}
+
+.suppress_section_margin_top {
+    margin-top: 0;
+}
+
+.subsection {
+    margin: auto
+}
+
+.subsection + .subsection, 
+.subsection_second_element_mobile_spacing {
+    margin-top: 8rem;
+}
+
+.left_aligned_section {
+    justify-content: flex-start !important;
+}
+
+.link_with_p_tag_margins {
+    margin-top: 3rem;
+}
+
+.link_with_p_tag_margins,
+.link {
+    color: var(--color-purple);
+}
+
+.link_with_p_tag_margins:hover,
+.link:hover {
+    color: var(--color-light-purple);
+}
+
+
+.quote_symbol {
+    font-size: 40px;
+    line-height: 1;
+}
+  
+@media only screen and (min-width: 50em) {
+    .container {
+        padding: 3rem 2rem;
+    }
+
+    .subsection {
+        display: flex;
+        justify-content: space-evenly;
+        width: 90vw;
+    }
+
+    .subsection_justify_baseline {
+        align-items: center;
+    }
+
+    .subsection_column {
+        flex-direction: column;
+    }
+      
+    .subsection > * {
+        width: 100%;
+        flex-basis: 100%;
+    }
+
+    /* Make sure there is at space between divs inside the subsection */
+    .subsection > div + div {
+        margin-left: 5rem;
+    }
+
+    .subsection_narrow_space_betweeen > div + div {
+        margin-left: 2rem;
+    }
+
+    .subsection_second_element_mobile_spacing {
+        margin-top: 0;
+    }
+
+    .link_with_p_tag_margins {
+        margin-top: 2rem;
+    }
+}
+
+

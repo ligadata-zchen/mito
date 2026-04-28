@@ -1,0 +1,54 @@
+
+# Basic Python ignore
+*.pyc
+.pytest_cache/
+venv/
+
+# Basic ignore for a TypeScript Project
+node_modules/
+.yarn
+.pnp.cjs
+.pnp.loader.mjs
+yarn.lock
+package-lock.json
+
+# Ignore files bundled with Mito
+docs/source/_static
+mitosheet/nbextension
+mitosheet/labextension
+mitosheet/mito_frontend.js
+mitosheet/mito_frontend.css
+lib
+mitovenv
+*deployment/tutorial/.ipynb_checkpoints/
+*mitosheet/tests/.ipynb_checkpoints/
+
+# Ignore generated config files for deployment
+staging-config.yaml
+config.yaml
+
+# Ignore egg-info Python packing files
+*.egg-info
+
+# Build cache info
+tsconfig.tsbuildinfo
+
+# Ignore environment variable file
+.env
+
+# Ignore build JS files as they always cause conflicts
+# and when developing you have to rebuild anyways. Note that
+# this makes it so installing from source of the development
+# repo may not work in all cases
+mitosheet/mito_frontend.js
+mitosheet/mito_frontend.css
+
+mitosheet/streamlit/v1/mitoBuild/*.js
+mitosheet/streamlit/v1/mitoBuild/*.css
+mitosheet/streamlit/v1/messagingBuild/*.js
+mitosheet/mito_dash/v1/mitoBuild/*.js
+mitosheet/mito_dash/v1/mitoBuild/*.css
+
+.streamlit/
+.mypy_cache/
+.ipynb_checkpoints/

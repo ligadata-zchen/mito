@@ -1,0 +1,11 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.merge-sheet-and-key {
+    display: flex;
+    justify-content: space-between;
+
+    margin-bottom: 5px;
+}

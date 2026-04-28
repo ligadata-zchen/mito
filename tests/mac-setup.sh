@@ -1,0 +1,43 @@
+# Copyright (c) Saga Inc.
+# Distributed under the terms of the GNU Affero General Public License v3.0 License.
+
+set -e
+
+# Create venv and install requirements
+python3 -m venv venv;
+source venv/bin/activate;
+pip install -r requirements.txt;
+
+# Install necessary node packages
+jlpm install
+
+# Install Playwright browsers.
+# In CI, default to chromium only to reduce setup time.
+# Locally, preserve broad browser install behavior unless a browser is provided.
+if [ "${CI:-}" = "true" ]; then
+  BROWSER_TO_INSTALL="${1:-chromium}"
+  npx playwright install "$BROWSER_TO_INSTALL" || echo "Warning: Failed to install specified browser"
+elif [ $# -eq 0 ]; then
+  npx playwright install chromium webkit firefox || echo "Warning: Failed to install some browsers"
+  npx playwright install chrome || echo "Warning: Failed to install Chrome"
+else
+  npx playwright install "$1" || echo "Warning: Failed to install specified browser"
+  npx playwright install || echo "Warning: Failed to install additional browsers"
+fi
+
+
+# Install mitosheet and build JS
+cd ../mitosheet
+pip install -e ".[test]"
+jlpm install
+jlpm run build
+
+# Install mito-ai-core (shared AI layer) before mito-ai
+cd ../mito-ai-core
+pip install -e ".[test]"
+
+# Install mito-ai and build JS
+cd ../mito-ai
+pip install -e ".[test]"
+jlpm install
+jlpm run build

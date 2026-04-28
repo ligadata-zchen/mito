@@ -1,0 +1,39 @@
+name: Test - mitosheet src lint
+
+on:
+  push:
+    branches: [ dev ]
+    paths:
+      - 'mitosheet/**'
+  pull_request:
+    paths:
+      - 'mitosheet/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-mitosheet-typescript:
+    name: Run linters
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: mitosheet/package-lock.json
+      - name: Install Node.js dependencies
+        run: | 
+          cd mitosheet
+          npm install eslint
+      - name: Run Linters
+        run: |
+          cd mitosheet
+          npm run lint:check
+
+

@@ -1,0 +1,85 @@
+name: Test - Mito AI Backend
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ dev ]
+    paths:
+      - 'mito-ai/**'
+  pull_request:
+    paths:
+      - 'mito-ai/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-mitoai-backend:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: pip
+        cache-dependency-path: |
+          mito-ai/setup.py
+          mito-ai-core/pyproject.toml
+          tests/requirements.txt
+    - name: Install Microsoft ODBC Driver
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo ACCEPT_EULA=Y apt-get install msodbcsql18 -y
+    - name: Install Microsoft ODBC Driver (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=2307162" -OutFile "msodbcsql.msi"
+        Start-Process msiexec.exe -Wait -ArgumentList "/i msodbcsql.msi /qn IACCEPTMSODBCSQLLICENSETERMS=YES"
+    - name: Install dependencies
+      run: |
+        pip install -e ./mito-ai-core
+        cd mito-ai
+        pip install -e ".[test, deploy]"
+        jlpm install --frozen-lockfile
+        jlpm build
+        jupyter labextension develop . --overwrite
+        jupyter server extension enable --py mito_ai
+    - name: Run tests
+      run: |
+        cd mito-ai
+        pytest
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        SNOWFLAKE_USERNAME: ${{ secrets.PYTEST_SNOWFLAKE_USERNAME }}
+        SNOWFLAKE_PASSWORD: ${{ secrets.PYTEST_SNOWFLAKE_PASSWORD }}
+        SNOWFLAKE_ACCOUNT: ${{ secrets.PYTEST_SNOWFLAKE_ACCOUNT }}
+        POSTGRES_USERNAME: ${{ secrets.PYTEST_POSTGRES_USERNAME }}
+        POSTGRES_PASSWORD: ${{ secrets.PYTEST_POSTGRES_PASSWORD }}
+        POSTGRES_HOST: ${{ secrets.PYTEST_POSTGRES_HOST }}
+        MYSQL_USERNAME: ${{ secrets.PYTEST_MYSQL_USERNAME }}
+        MYSQL_PASSWORD: ${{ secrets.PYTEST_MYSQL_PASSWORD }}
+        MYSQL_HOST: ${{ secrets.PYTEST_MYSQL_HOST }}
+        MSSQL_USERNAME: ${{ secrets.PYTEST_MSSQL_USERNAME }}
+        MSSQL_PASSWORD: ${{ secrets.PYTEST_MSSQL_PASSWORD }}
+        MSSQL_HOST: ${{ secrets.PYTEST_MSSQL_HOST }}
+        ORACLE_USERNAME: ${{ secrets.PYTEST_ORACLE_USERNAME }}
+        ORACLE_PASSWORD: ${{ secrets.PYTEST_ORACLE_PASSWORD }}
+        ORACLE_HOST: ${{ secrets.PYTEST_ORACLE_HOST }}
+    - name: Upload test-results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: mitoai-backend-report-${{ matrix.os }}-${{ matrix.python-version }}-${{ github.run_id }}
+        path: mito-ai/tests/pytest-report/
+        retention-days: 14

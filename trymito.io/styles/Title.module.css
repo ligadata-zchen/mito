@@ -1,0 +1,268 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.title_card {
+    padding-top: 4rem;
+    padding-bottom: 2rem;
+}
+
+.grid_card {
+    position: relative; /* enable overlay positioning */
+    overflow: hidden;   /* clip overlay edges */
+}
+
+.title {
+    margin: 0;
+    line-height: 1.15;
+    font-size: 4rem;
+    text-align: center;
+}
+
+.cycling_h1_container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 150px;
+}
+
+.cycling_text {
+    position: relative;
+    text-align: center;
+    display: inline-grid;
+    /* Let content define width; centers on small screens */
+}
+
+.cycling_word {
+    /* Overlay all words in a single grid cell without absolute positioning */
+    position: relative;
+    grid-area: 1 / 1;
+    margin-top: 10px;
+    opacity: 0;
+    transition: all 0.5s ease-in-out;
+    animation: cycleWords 20s infinite;
+    white-space: nowrap;
+}
+
+.description {
+    line-height: 1.5;
+    margin: 0;
+    line-height: 1.15;
+    font-size: 2rem;
+    text-align: center;
+    margin-top: 2rem;
+    color: var(--color-text-secondary);
+    font-weight: 200;
+}
+
+@media only screen and (min-width: 50em) {
+    .title_card {
+        padding-top: 7rem !important;
+    }
+
+    .title {
+        font-size: 4rem;
+        max-width: 100%;
+    }
+
+    .subtitle {
+        font-size: 1.5rem;
+        max-width: 60vw;
+    }
+
+    .description {
+        max-width: 80%;
+        font-size: 1.5rem;
+        line-height: 2;
+    }
+}
+
+/* Left-align text only on larger screens when side-by-side */
+@media only screen and (min-width: 75em) {
+    .title {
+        text-align: left;
+    }
+
+    .cycling_h1_container {
+        width: 100%;
+        text-align: center;
+        align-items: flex-start;
+    }
+
+    .cycling_text {
+        text-align: left;
+        display: inline-grid;
+        justify-items: start; /* left-align on wide screens */
+    }
+
+    .description {
+        text-align: left;
+        max-width: 70%;
+    }
+}
+
+.cycling_word:nth-child(1) {
+    animation-delay: 0s;
+    background: linear-gradient(
+        135deg,
+        var(--color-brand) 0%,
+        var(--color-brand-light) 25%,
+        var(--color-text-primary) 50%,
+        var(--color-brand-light) 75%,
+        var(--color-accent-amber) 100%
+    );
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: cycleWords 20s infinite, shineGradient 3s ease-in-out infinite;
+}
+
+.cycling_word:nth-child(2) {
+    animation-delay: 4s;
+    background: linear-gradient(
+        135deg,
+        var(--color-brand-light) 0%,
+        var(--color-brand) 25%,
+        var(--color-text-primary) 50%,
+        var(--color-brand) 75%,
+        var(--color-accent-blue) 100%
+    );
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: cycleWords 20s infinite, shineGradient 3s ease-in-out infinite;
+    animation-delay: 4s, 4s;
+}
+
+.cycling_word:nth-child(3) {
+    animation-delay: 8s;
+    background: linear-gradient(
+        135deg,
+        var(--color-accent-amber) 0%,
+        var(--color-brand) 25%,
+        var(--color-text-primary) 50%,
+        var(--color-brand) 75%,
+        var(--color-brand-light) 100%
+    );
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: cycleWords 20s infinite, shineGradient 3s ease-in-out infinite;
+    animation-delay: 8s, 8s;
+}
+
+.cycling_word:nth-child(4) {
+    animation-delay: 12s;
+    background: linear-gradient(
+        135deg,
+        var(--color-accent-blue) 0%,
+        var(--color-brand) 25%,
+        var(--color-text-primary) 50%,
+        var(--color-brand) 75%,
+        var(--color-accent-amber) 100%
+    );
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: cycleWords 20s infinite, shineGradient 3s ease-in-out infinite;
+    animation-delay: 12s, 12s;
+}
+
+.cycling_word:nth-child(5) {
+    animation-delay: 16s;
+    background: linear-gradient(
+        135deg,
+        var(--color-brand-light) 0%,
+        var(--color-accent-amber) 25%,
+        var(--color-text-primary) 50%,
+        var(--color-accent-amber) 75%,
+        var(--color-brand) 100%
+    );
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: cycleWords 20s infinite, shineGradient 3s ease-in-out infinite;
+    animation-delay: 16s, 16s;
+}
+
+@keyframes cycleWords {
+    0%, 18% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    20%, 100% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+@keyframes shineGradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Subtle animated grid overlay with light parallax - applies wherever .grid_card is used */
+.grid_card::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    right: -10%;
+    bottom: -10%;
+    /* Pure CSS subtle grid – no external asset required */
+    background-image:
+        repeating-linear-gradient(
+            0deg,
+            var(--color-grid-overlay) 0px,
+            var(--color-grid-overlay) 1px,
+            transparent 1px,
+            transparent 80px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            var(--color-grid-overlay) 0px,
+            var(--color-grid-overlay) 1px,
+            transparent 1px,
+            transparent 80px
+        );
+    background-repeat: repeat;
+    background-position: 0 0;
+    /* Use alpha in gradients for subtlety; keep full overlay opacity */
+    opacity: 1;
+    pointer-events: none;
+    background-attachment: fixed; /* simple parallax effect */
+    animation: gridDrift 60s linear infinite;
+    z-index: 0; /* place beneath content */
+}
+
+@keyframes gridDrift {
+    0%   { background-position: 0px 0px; }
+    50%  { background-position: 200px 120px; }
+    100% { background-position: 0px 0px; }
+}
+
+/* Ensure content stays above the overlay */
+.grid_card > * {
+    position: relative;
+    z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .grid_card::before {
+        animation: none;
+    }
+}

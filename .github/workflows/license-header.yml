@@ -1,0 +1,51 @@
+name: Fix License Headers
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions:
+  contents: write
+
+jobs:
+  header-license-fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fix License Header
+        uses: apache/skywalking-eyes/header@v0.7.0
+        with:
+          mode: fix
+
+      - name: List files changed
+        id: files-changed
+        shell: bash -l {0}
+        run: |
+          set -ex
+          export CHANGES=$(git status --porcelain | tee modified.log | wc -l)
+          cat modified.log
+          # Remove the log otherwise it will be committed
+          rm modified.log
+
+          echo "N_CHANGES=${CHANGES}" >> $GITHUB_OUTPUT
+
+          git diff
+
+      - name: Commit any changes
+        if: steps.files-changed.outputs.N_CHANGES != '0'
+        shell: bash -l {0}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add .
+          git commit -m "Automatic application of license header to dev branch"
+
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

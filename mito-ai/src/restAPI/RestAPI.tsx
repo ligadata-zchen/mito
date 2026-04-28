@@ -1,0 +1,334 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+import { requestAPI } from "./utils";
+import { StreamlitPreviewResponseError, StreamlitPreviewResponseSuccess } from "../Extensions/AppPreview/StreamlitPreviewPlugin";
+
+
+/************************************
+
+LOG ENDPOINTS
+
+************************************/
+
+export const logEvent = async (logEvent: string, params?: Record<string, any>): Promise<void> => {
+    const resp = await requestAPI<void>('log', {
+        method: 'PUT',
+        body: JSON.stringify({ 
+            log_event: logEvent,
+            params: params || {}
+        }),
+    });
+    
+    if (resp.error) {
+        console.error(resp.error.message);
+    }
+}
+
+
+/************************************
+
+SETTINGS ENDPOINTS
+
+************************************/
+
+
+export const getSetting = async (settingsKey: string): Promise<string | undefined> => {
+
+    const resp = await requestAPI<{key: string, value: string} | undefined>(`settings/${settingsKey}`)
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+
+    return resp.data?.value || undefined;
+}
+
+export const updateSettings = async (settingsKey: string, settingsValue: string): Promise<string> => {
+    const resp = await requestAPI<string>(`settings/${settingsKey}`, {
+        method: 'PUT',
+        body: JSON.stringify({ value: settingsValue }),
+    })
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+    return resp.data || '';
+}
+
+
+/************************************
+
+RULES ENDPOINTS
+
+************************************/
+
+export const setRule = async(
+    ruleName: string,
+    ruleContent: string,
+    isDefault?: boolean
+): Promise<string> => {
+    const body: { content: string; is_default?: boolean } = { content: ruleContent };
+    if (isDefault !== undefined) {
+        body.is_default = isDefault;
+    }
+    const resp = await requestAPI<string>(`rules/${ruleName}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+    })
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+
+    return resp.data || '';
+}
+
+export interface RuleResponse {
+    key: string;
+    content: string;
+    is_default?: boolean;
+}
+
+export const getRule = async(ruleName: string): Promise<{ content: string | undefined; isDefault: boolean }> => {
+    const resp = await requestAPI<RuleResponse>(`rules/${ruleName}`)
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+
+    return {
+        content: resp.data?.content,
+        isDefault: Boolean(resp.data?.is_default)
+    };
+}
+
+export interface RuleListItem {
+    name: string;
+    isDefault: boolean;
+}
+
+export const getRules = async(): Promise<RuleListItem[]> => {
+    const resp = await requestAPI<Array<{ name: string; is_default: boolean }>>(`rules`)
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+    const data = resp.data || [];
+    return data.map(r => ({ name: r.name, isDefault: Boolean(r.is_default) }));
+}
+
+export const deleteRule = async(ruleName: string): Promise<void> => {
+    const resp = await requestAPI<{ status: string; key: string }>(`rules/${ruleName}`, {
+        method: 'DELETE',
+    });
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+}
+
+/************************************
+
+DATABASE ENDPOINTS
+
+************************************/
+
+export const getDatabaseConnections = async (): Promise<Record<string, any>> => {
+    const resp = await requestAPI<Record<string, any>>('db/connections')
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+    return resp.data || {};
+}
+
+/************************************
+
+STREAMLIT PREVIEW ENDPOINTS
+
+************************************/
+
+
+export const startStreamlitAppPreview = async(
+    notebookPath: string, 
+    notebookID: string | undefined,
+    force_recreate: boolean = false,
+    streamlit_app_prompt: string = ''
+): Promise<StreamlitPreviewResponseSuccess | StreamlitPreviewResponseError> => {
+    const response = await requestAPI<StreamlitPreviewResponseSuccess>('streamlit-preview', {
+        method: 'POST',
+        body: JSON.stringify({ 
+            notebook_path: notebookPath, 
+            notebook_id: notebookID,
+            force_recreate: force_recreate,
+            streamlit_app_prompt: streamlit_app_prompt
+        })
+    })
+    
+    if (response.error) {
+        const streamlitPreviewReponseError: StreamlitPreviewResponseError = {
+            type: 'error',
+            message: response.error.message
+        }
+        return streamlitPreviewReponseError
+    }
+
+    return response.data!;
+}
+
+export const stopStreamlitPreview = async (previewId: string): Promise<void> => {
+    const response = await requestAPI<void>(`streamlit-preview/${previewId}`, {
+        method: 'DELETE',
+    })
+    
+    if (response.error) {
+        throw new Error(response.error.message);
+    }
+}
+
+/************************************
+
+GITHUB COPILOT (only when mito-ai-helper-github-copilot is installed on the server)
+
+************************************/
+
+export interface GithubCopilotLoginStatusPayload {
+  status: string;
+  verification_uri?: string;
+  user_code?: string;
+  available_chat_models?: string[];
+}
+
+/**
+ * Returns null if the GitHub Copilot REST routes are not available (helper not installed or error).
+ */
+export const fetchGithubCopilotLoginStatus =
+  async (): Promise<GithubCopilotLoginStatusPayload | null> => {
+    const resp = await requestAPI<GithubCopilotLoginStatusPayload>(
+      'github-copilot/login-status',
+      { method: 'GET' }
+    );
+    if (resp.error) {
+      return null;
+    }
+    return resp.data ?? null;
+  };
+
+export const startGithubCopilotDeviceLogin = async (): Promise<
+  GithubCopilotLoginStatusPayload | { error: string } | null
+> => {
+  const resp = await requestAPI<GithubCopilotLoginStatusPayload | { error: string }>(
+    'github-copilot/login',
+    { method: 'POST' }
+  );
+  if (resp.error) {
+    return { error: resp.error.message };
+  }
+  return resp.data ?? null;
+};
+
+export const logoutGithubCopilot = async (): Promise<GithubCopilotLoginStatusPayload | null> => {
+  const resp = await requestAPI<GithubCopilotLoginStatusPayload>('github-copilot/logout', {
+    method: 'GET'
+  });
+  if (resp.error) {
+    return null;
+  }
+  return resp.data ?? null;
+};
+
+/************************************
+
+USER ENDPOINTS
+
+************************************/
+
+export const getUserKey = async (key: string): Promise<string | undefined> => {
+    const resp = await requestAPI<{key: string, value: string}>(`user/${key}`)
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+
+    return resp.data?.value;
+}
+
+export const setUserKey = async (key: string, value: string): Promise<string> => {
+    const resp = await requestAPI<string>(`user/${key}`, {
+        method: 'PUT',
+        body: JSON.stringify({ value: value }),
+    })
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+    return resp.data || '';
+}
+
+/************************************
+
+CHART WIZARD ENDPOINTS
+
+************************************/
+
+export const convertChartCode = async (code: string): Promise<{message: string, converted_code?: string}> => {
+    const resp = await requestAPI<{message: string, converted_code?: string}>('chart-wizard/convert', {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+    })
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+    return resp.data!;
+}
+
+export const addChartField = async (
+    code: string, 
+    userDescription: string, 
+    existingVariables: string[]
+): Promise<{message: string, updated_code?: string}> => {
+    const resp = await requestAPI<{message: string, updated_code?: string}>('chart-wizard/add-field', {
+        method: 'POST',
+        body: JSON.stringify({ 
+            code, 
+            user_description: userDescription,
+            existing_variables: existingVariables
+        }),
+    })
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+    return resp.data!;
+}
+
+/************************************
+
+CHAT HISTORY ENDPOINTS
+
+************************************/
+
+export interface ChatThreadMetadata {
+    thread_id: string;
+    name: string;
+    creation_ts: number;
+    last_interaction_ts: number;
+}
+
+export interface ChatThread {
+    thread_id: string;
+    name: string;
+    creation_ts: number;
+    last_interaction_ts: number;
+    display_history: Array<{role: string, content: string}>;
+    ai_optimized_history: Array<{role: string, content: string}>;
+}
+
+export const getChatHistoryThreads = async (): Promise<ChatThreadMetadata[]> => {
+    const resp = await requestAPI<{threads: ChatThreadMetadata[]}>('chat-history/threads')
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+    return resp.data?.threads || [];
+}
+
+export const getChatHistoryThread = async (threadId: string): Promise<ChatThread> => {
+    const resp = await requestAPI<ChatThread>(`chat-history/threads/${threadId}`)
+    if (resp.error) {
+        throw new Error(resp.error.message);
+    }
+    return resp.data!;
+}

@@ -1,0 +1,16 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.overlay {
+    height: 100%;
+    width: 100%;
+
+    background-color: rgba(128, 128, 128, 0.5);
+
+    z-index: 2;
+    position: absolute;
+
+    display: flex;
+}

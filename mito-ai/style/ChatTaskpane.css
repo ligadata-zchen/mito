@@ -1,0 +1,234 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.chat-taskpane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--chat-background-color) !important;
+  --jp-sidebar-min-width: 350px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-y: hidden;
+  /* 
+        Don't set padding on top from the taskpane so we can instead
+        set the padding on the chat-taskpane-header instead to make 
+        sure the sticky header covers all of the content behind it. 
+    */
+  padding-top: 0px;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 10px;
+  /*
+    'container-type: inline-size' enables container queries on this element.
+    This allows child elements to use @container rules to react to the width of .chat-taskpane,
+    rather than the viewport.
+  */
+  container-type: inline-size;
+}
+
+.chat-taskpane.disabled button:not(.signup-form-container):not(.signup-form-container *):not(.chat-taskpane-header-left):not(.chat-taskpane-header-left *) {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.chat-taskpane.disabled textarea:not(.signup-form-container):not(.signup-form-container *) {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.suggestions-container {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.chat-taskpane-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  padding-bottom: 5px;
+  position: sticky;
+  /* Make the header sticky */
+  top: 0;
+  /* Stick to the top of the container */
+  background-color: var(--chat-background-color);
+  /* Ensure background color covers content behind */
+  z-index: 1;
+  /* Ensure it stays above other content */
+}
+
+.chat-taskpane-header-left {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-taskpane-header-right {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-taskpane-header-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.chat-taskpane-header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-empty-message {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: auto;
+  min-height: 200px;
+  max-height: 100%;
+  text-align: center;
+  color: var(--muted-text-color);
+  padding: 20px;
+  /* Add container query support */
+  container-type: inline-size;
+  user-select: none;
+  overflow-y: hidden;
+  margin: auto 0; /* This centers it vertically in the flex container */
+}
+
+.chat-empty-message .long-message {
+  font-size: 16px;
+  line-height: 1.5;
+  max-width: 80%;
+  margin: 0 auto;
+}
+
+/* Use container query instead of media query */
+@container (max-width: 300px) {
+  .chat-empty-message .long-message {
+    display: none;
+  }
+}
+
+.chat-loading-message {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.chat-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-controls-left {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: flex-start;
+}
+.chat-controls-left > * {
+  margin: 0 !important;
+}
+.submit-button {
+  background-color: var(--purple-400);
+  color: var(--purple-700);
+  padding: 2px 10px;
+}
+
+.submit-button:hover {
+  background-color: var(--purple-500);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.stop-agent-button {
+  margin-top: 8px;
+}
+
+.stop-agent-button-content {
+  display: flex;
+  text-align: center;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.agent-controls {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.agent-start-button {
+  flex: 1;
+}
+
+.agent-cancel-button {
+  width: 32px;
+  padding: 0;
+}
+
+/* Add suggestion box container styling */
+.chat-suggestions {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 8px;
+  padding-bottom: 16px;
+  margin: 8px 0;
+  /* smooth scrolling on touch devices */
+  -webkit-overflow-scrolling: touch;
+  /* Mask properties will be applied dynamically through JavaScript */
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* Add individual suggestion box styling */
+.suggestion-box {
+  background-color: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color1);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  flex-shrink: 0;
+  /* wrap text onto multiple lines */
+  white-space: normal;
+  text-align: center;
+  /* limit width for wrapping into two lines */
+  max-width: 140px;
+  /* align content vertically */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.suggestion-box:hover {
+  background-color: var(--jp-border-color2);
+}
+
+/* Hide the 'Submit' text in the submit button when the chat-taskpane is narrow */
+@container (max-width: 350px) {
+  .submit-button .submit-text {
+    display: none;
+  }
+}

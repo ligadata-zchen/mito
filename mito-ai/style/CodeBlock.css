@@ -1,0 +1,161 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.code-block-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin: 10px 0;
+
+  background-color: var(--chat-background-color);
+  border-radius: 4px;
+  border: 1px solid var(--jp-cell-editor-border-color);
+  overflow: hidden;
+}
+
+.code-content {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.code-block-toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: end;
+
+  width: 100%;
+  background-color: var(--chat-user-message-background-color);
+  border-bottom: 1px solid var(--jp-cell-editor-border-color);
+  font-size: 0.8em;
+}
+
+.code-location {
+  flex-grow: 1;
+  margin-left: 5px;
+  color: var(--chat-user-message-font-color);
+}
+
+.code-block-toolbar button {
+  background-color: var(--chat-user-message-background-color);
+  border: none;
+  border-left: 1px solid var(--jp-cell-editor-border-color);
+  border-radius: 0px;
+
+  font-size: 0.8em;
+  color: var(--chat-user-message-font-color);
+}
+
+.code-block-toolbar button:hover {
+  background-color: var(--chat-background-color);
+  color: var(--chat-assistant-message-font-color);
+}
+
+.active-cell-code-block {
+  opacity: 0.7;
+}
+
+.active-cell-code-block:hover {
+  opacity: 1;
+  transition: 0.3s;
+}
+
+.code-block-expand-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 0;
+  width: 100%;
+  background-color: var(--chat-background-color);
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.code-block-expand-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.code-block-expand-button svg {
+  display: block;
+  margin: 0;
+}
+
+.code-block-expand-button .icon-button {
+  background-color: transparent;
+}
+
+.agent-mode-toggle {
+  cursor: pointer;
+  padding: 10px;
+  color: var(--jp-ui-font-color2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--jp-cell-editor-border-color);
+  border-radius: 5px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.agent-mode-toggle:hover {
+  background-color: var(--jp-layout-color3);
+}
+
+.agent-mode-toggle.error-fixup {
+  border: none;
+}
+
+.agent-mode-toggle.error-fixup.expanded {
+  background-color: var(--jp-layout-color2);
+}
+
+.agent-mode-toggle-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.agent-mode-toggle-content svg {
+  flex-shrink: 0;
+}
+
+.agent-mode-toggle svg:last-child {
+  flex-shrink: 0;
+}
+
+.agent-mode-toggle.expanded {
+  border: none;
+  border-radius: 5px 5px 0 0;
+  background-color: var(--jp-layout-color2);
+}
+
+.agent-mode-collapsed {
+  border: none;
+  margin: 0 0;
+}
+
+.scratchpad-result {
+  padding: 8px 12px;
+  border-top: 1px solid var(--jp-cell-editor-border-color);
+  background-color: var(--jp-layout-color1);
+}
+
+.scratchpad-result pre {
+  margin: 0;
+  font-family: var(--jp-code-font-family);
+  font-size: var(--jp-code-font-size);
+  color: var(--jp-ui-font-color2);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.scratchpad-result-warning {
+  color: var(--jp-warn-color1, #f0a000);
+  font-style: italic;
+}
+

@@ -1,0 +1,14 @@
+/*
+ * Copyright (c) Saga Inc.
+ * Distributed under the terms of the GNU Affero General Public License v3.0 License.
+ */
+
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+}
+
+.container > * + * {
+    margin-left: 10px !important;
+}
