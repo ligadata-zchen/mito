@@ -3,7 +3,7 @@
   Mito
 </h1>
 <p align="center">
-  <a href="https://www.trymito.io">Website</a> &bull; <a href="https://docs.trymito.io">Documentation</a> &bull; <a href="https://discord.gg/XdJSZyejJU">Discord</a> &bull; <a href="mailto:founders@sagacollab.com">Email</a>
+  This is forked from https://github.com/mito-ds/mito, extended by add Hive/Spark connection and using MLFlow for observability. please refer to original <a href="https://docs.trymito.io"> Documentation</a>
 </p>
 <p align="center">
   Jupyter extensions that make you work faster. 
