@@ -1,18 +1,17 @@
 name: Test - Mito AI Frontend Playwright with LiteLLM
 
 on:
-  push:
-    branches: [ dev ]
-    paths:
-      - 'mito-ai/**'
-      - 'tests/llm_providers_tests/litellm_llm_providers.spec.ts'
-      - '.github/workflows/test-litellm-llm-providers.yml'
   pull_request:
     paths:
       - 'mito-ai/**'
       - 'tests/llm_providers_tests/litellm_llm_providers.spec.ts'
       - '.github/workflows/test-litellm-llm-providers.yml'
+
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

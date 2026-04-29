@@ -1,13 +1,10 @@
 name: Deploy - Mito AI CLI
 on:
-  push:
-    branches:
-      - dev
-      - main
-    paths:
-      - 'mito-ai-cli/**'
-      - 'deployment/**'
-      - '.github/workflows/deploy-mito-ai-cli.yml'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
 
 jobs:
   deploy-mito-ai-cli:

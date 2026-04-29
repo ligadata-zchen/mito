@@ -2,12 +2,10 @@ name: Pack - Mito AI MCP (.mcpb)
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - 'mito-ai-mcp/**'
-      - '.github/workflows/pack-mito-ai-mcp-mcpb.yml'
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
 
 permissions:
   contents: write

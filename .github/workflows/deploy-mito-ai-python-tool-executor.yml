@@ -1,13 +1,10 @@
 name: Deploy - Mito AI Python Tool Executor
 on:
-  push:
-    branches:
-      - dev
-      - main
-    paths:
-      - 'mito-ai-python-tool-executor/**'
-      - 'deployment/**'
-      - '.github/workflows/deploy-mito-ai-python-tool-executor.yml'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
 
 jobs:
   deploy-mito-ai-python-tool-executor:

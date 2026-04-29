@@ -2,12 +2,11 @@ name: Test - Mito AI CLI
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ dev ]
-    paths:
-      - 'mito-ai-cli/**'
-      - 'mito-ai-core/**'
-      - 'mito-ai-python-tool-executor/**'
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
+
   pull_request:
     paths:
       - 'mito-ai-cli/**'

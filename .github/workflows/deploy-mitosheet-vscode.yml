@@ -5,12 +5,10 @@
 name: Deploy - mitosheet-vscode
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "mitosheet-vscode/**"
-      - ".github/workflows/deploy-mitosheet-vscode.yml"
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
 
 permissions:
   contents: read

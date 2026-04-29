@@ -1,9 +1,10 @@
 name: Deploy - mitosheet
 on:
-  push:
-    branches:
-      - dev
-      - main
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
 
 jobs:
   deploy-mitosheet:

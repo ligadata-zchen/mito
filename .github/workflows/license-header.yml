@@ -1,9 +1,11 @@
 name: Fix License Headers
 
 on:
-  push:
-    branches:
-      - dev
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
 
 permissions:
   contents: write

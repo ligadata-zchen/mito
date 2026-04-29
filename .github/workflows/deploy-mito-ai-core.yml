@@ -1,13 +1,10 @@
 name: Deploy - Mito AI Core
 on:
-  push:
-    branches:
-      - dev
-      - main
-    paths:
-      - 'mito-ai-core/**'
-      - 'deployment/**'
-      - '.github/workflows/deploy-mito-ai-core.yml'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
 
 jobs:
   deploy-mito-ai-core:

@@ -1,12 +1,12 @@
 name: Test - Mito SQL Cell
 
 on:
-  push:
-    branches: [ dev ]
-    paths:
-      - 'mito-sql-cell/**'
-      - 'tests/mito_sql_ui_tests/**'
-      - '.github/workflows/test-mito-sql-cell.yml'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
+
   pull_request:
     paths:
       - 'mito-sql-cell/**'

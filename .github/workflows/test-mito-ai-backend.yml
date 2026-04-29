@@ -2,10 +2,11 @@ name: Test - Mito AI Backend
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ dev ]
-    paths:
-      - 'mito-ai/**'
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
+
   pull_request:
     paths:
       - 'mito-ai/**'

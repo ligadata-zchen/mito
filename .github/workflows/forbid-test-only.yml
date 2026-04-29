@@ -1,16 +1,16 @@
 name: Check for test.only statements
 
 on:
-  push:
-    branches: [ dev ]
-    paths:
-      - 'tests/**'
-      - '.github/workflows/check-test-only.yml'
   pull_request:
     paths:
       - 'tests/**'
       - '.github/workflows/check-test-only.yml'
+
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

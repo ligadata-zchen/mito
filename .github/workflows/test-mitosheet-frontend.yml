@@ -1,13 +1,12 @@
 name: Test - mitosheet frontend
 
 on:
-  push:
-    branches: [ dev ]
-    paths:
-      - 'mitosheet/**'
-      - 'tests/**'
-      - '.github/workflows/test-mitosheet-frontend.yml'
-      - '!tests/mitoai_ui_tests/**'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
+
   pull_request:
     paths:
       - 'mitosheet/**'

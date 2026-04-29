@@ -1,18 +1,17 @@
 name: Test - Mito AI Frontend Playwright
 
 on:
-  push:
-    branches: [ dev ]
-    paths:
-      - 'mito-ai/**'
-      - 'tests/mitoai_ui_tests/**'
-      - '.github/workflows/test-mito-ai.yml'
   pull_request:
     paths:
       - 'mito-ai/**'
       - 'tests/mitoai_ui_tests/**'
       - '.github/workflows/test-mito-ai.yml'
+
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

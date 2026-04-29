@@ -1,13 +1,12 @@
 name: Test - Mito AI Jest Frontend
 
 on:
-  push:
-    branches: [ dev ]
-    paths:
-      - 'mito-ai/src/**'
-      - 'mito-ai/package.json'
-      - 'mito-ai/jest.config.js'
-      - 'mito-ai/src/tests/**'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "test or deploy tag"
+        required: false
+
   pull_request:
     paths:
       - 'mito-ai/src/**'
